@@ -11,8 +11,8 @@
     <style>
         /* ============ THEME ============ */
         :root {
-            --bg-glass: rgba(10, 14, 26, 0.78);
-            --bg-glass-hover: rgba(10, 14, 26, 0.88);
+            --bg-glass: rgba(10, 14, 26, 0.75);
+            --bg-glass-hover: rgba(10, 14, 26, 0.85);
             --border-glass: rgba(255, 255, 255, 0.08);
             --shadow-glass: 0 8px 40px rgba(0, 0, 0, 0.6);
             --text-primary: #ffffff;
@@ -62,7 +62,7 @@
         }
 
         .container {
-            max-width: 440px;
+            max-width: 460px;
             width: 100%;
             background: var(--bg-glass);
             backdrop-filter: blur(24px);
@@ -277,18 +277,58 @@
             color: #22d3ee;
         }
 
+        /* ============ LOADING SPINNER ============ */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            margin: 10px 0;
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 10px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #e94560;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .loading-timer {
+            color: #22d3ee;
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        /* ============ PREDICT BUTTON ============ */
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
         }
 
         .predict-btn {
-            padding: 18px 50px;
+            padding: 20px 50px;
             border: none;
             border-radius: 16px;
             background: var(--predict-btn-bg);
             color: var(--predict-btn-text);
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 800;
             font-family: 'Inter', sans-serif;
             cursor: pointer;
@@ -331,7 +371,7 @@
         }
 
         .predict-btn:disabled {
-            opacity: 0.4;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
@@ -357,47 +397,10 @@
             }
         }
 
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 16px;
-            margin: 8px 0;
-        }
-
-        .loading-spinner.active {
-            display: block;
-        }
-
-        .spinner {
-            width: 36px;
-            height: 36px;
-            margin: 0 auto 8px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid #e94560;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .loading-timer {
-            color: #22d3ee;
-            font-size: 20px;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
+        /* ============ COUNTDOWN BAR ============ */
         .countdown-container {
-            margin: 12px 0 14px;
-            padding: 10px 14px;
+            margin: 14px 0 16px;
+            padding: 12px 16px;
             background: var(--result-bg);
             border-radius: 12px;
             border: 1px solid var(--border-glass);
@@ -416,7 +419,7 @@
             font-size: 11px;
             color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .countdown-label .time-left {
@@ -445,9 +448,9 @@
 
         .countdown-bar-track {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: var(--freq-bar-bg);
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
             position: relative;
         }
@@ -455,47 +458,50 @@
         .countdown-bar-fill {
             height: 100%;
             width: 100%;
-            border-radius: 4px;
+            border-radius: 6px;
             transition: width 0.3s ease, background 0.5s ease;
             background: linear-gradient(90deg, #22d3ee, #10b981);
         }
 
         .countdown-bar-fill.glow-green {
             background: linear-gradient(90deg, #10b981, #22d3ee);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
         }
 
         .countdown-bar-fill.glow-yellow {
             background: linear-gradient(90deg, #f59e0b, #fbbf24);
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
         }
 
         .countdown-bar-fill.glow-orange {
             background: linear-gradient(90deg, #f97316, #fb923c);
-            box-shadow: 0 0 20px rgba(249, 115, 22, 0.25);
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.3);
         }
 
         .countdown-bar-fill.glow-red {
             background: linear-gradient(90deg, #dc2626, #e94560);
-            box-shadow: 0 0 25px rgba(233, 69, 96, 0.35);
-            animation: pulseBar 0.5s ease-in-out infinite alternate;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.4);
+            animation: pulseBar 0.6s ease-in-out infinite alternate;
         }
 
         @keyframes pulseBar {
             0% {
                 opacity: 0.8;
+                box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
             }
             100% {
                 opacity: 1;
+                box-shadow: 0 0 40px rgba(233, 69, 96, 0.6);
             }
         }
 
+        /* ============ RESULTS ============ */
         .result-section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
-            margin: 0 0 10px;
-            padding: 14px;
+            margin: 0 0 12px;
+            padding: 16px;
             background: var(--result-bg);
             border-radius: 14px;
             border: 1px solid var(--border-glass);
@@ -516,7 +522,7 @@
         }
 
         .result-item .value {
-            font-size: 30px;
+            font-size: 32px;
             font-weight: 800;
             margin-top: 2px;
             font-variant-numeric: tabular-nums;
@@ -525,18 +531,18 @@
 
         .result-item .value.predicted {
             color: #e94560;
-            text-shadow: 0 0 25px rgba(233, 69, 96, 0.12);
-            font-size: 44px;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
+            font-size: 48px;
         }
 
         .result-item .value.confidence {
-            font-size: 22px;
+            font-size: 24px;
             color: #10b981;
-            text-shadow: 0 0 25px rgba(16, 185, 129, 0.1);
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
         }
 
         .result-item .value.status-text {
-            font-size: 18px;
+            font-size: 20px;
             color: #f59e0b;
         }
 
@@ -544,7 +550,7 @@
             text-align: center;
             font-size: 12px;
             font-weight: 600;
-            padding: 6px;
+            padding: 8px;
             border-radius: 10px;
             margin-top: 2px;
             border: 1px solid transparent;
@@ -593,7 +599,7 @@
             background: var(--bg-glass);
             border-radius: 12px;
             padding: 10px 14px;
-            margin: 10px 0;
+            margin: 12px 0;
             border: 1px solid var(--border-glass);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -605,23 +611,23 @@
             letter-spacing: 1px;
             color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .history-digits {
             display: flex;
-            gap: 4px;
+            gap: 5px;
             flex-wrap: wrap;
             justify-content: center;
         }
 
         .history-digit {
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             border-radius: 6px;
             background: var(--history-digit-bg);
@@ -641,7 +647,7 @@
         }
 
         .frequency-section {
-            margin: 10px 0 12px;
+            margin: 12px 0 14px;
         }
 
         .frequency-title {
@@ -650,7 +656,7 @@
             letter-spacing: 1px;
             color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .frequency-grid {
@@ -663,14 +669,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            gap: 3px;
         }
 
         .freq-bar {
             width: 100%;
-            height: 28px;
+            height: 30px;
             background: var(--freq-bar-bg);
-            border-radius: 3px;
+            border-radius: 4px;
             position: relative;
             overflow: hidden;
         }
@@ -680,7 +686,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            border-radius: 3px;
+            border-radius: 4px;
             transition: height 0.5s ease;
             background: var(--freq-fill);
         }
@@ -696,11 +702,11 @@
         }
 
         .log-section {
-            margin-top: 10px;
-            padding: 6px 10px;
+            margin-top: 12px;
+            padding: 8px 12px;
             background: var(--log-bg);
             border-radius: 10px;
-            max-height: 50px;
+            max-height: 55px;
             overflow-y: auto;
             font-size: 10px;
             font-family: 'Inter', monospace;
@@ -719,7 +725,7 @@
         }
 
         .log-entry {
-            padding: 1px 0;
+            padding: 2px 0;
             color: var(--log-text);
         }
         .log-entry.success {
@@ -740,23 +746,23 @@
                 font-size: 30px;
             }
             .predict-btn {
-                padding: 14px 30px;
-                font-size: 18px;
+                padding: 16px 30px;
+                font-size: 20px;
             }
             .result-item .value.predicted {
-                font-size: 34px;
+                font-size: 36px;
             }
             .result-item .value {
-                font-size: 24px;
+                font-size: 26px;
             }
             .result-item .value.confidence {
-                font-size: 18px;
+                font-size: 20px;
             }
             .freq-bar {
-                height: 22px;
+                height: 24px;
             }
             .result-section {
-                padding: 10px;
+                padding: 12px;
                 gap: 6px;
             }
             select {
@@ -823,6 +829,7 @@
             </div>
         </div>
 
+        <!-- LOADING SPINNER -->
         <div class="loading-spinner" id="loadingSpinner">
             <div class="spinner"></div>
             <div class="loading-text">🔮 Analyzing market patterns...</div>
@@ -832,7 +839,7 @@
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
-                <span class="sub">Get the next digit prediction</span>
+                <span class="sub">Click to get a digit prediction</span>
             </button>
         </div>
 
@@ -848,7 +855,7 @@
 
         <div class="result-section">
             <div class="result-item">
-                <div class="label">Predicted</div>
+                <div class="label">Predicted Digit</div>
                 <div class="value predicted" id="predictedDisplay">-</div>
             </div>
             <div class="result-item">
@@ -888,7 +895,6 @@
 
         const APP_ID = 1089;
         const PREDICTION_WINDOW = 15;
-        const MIN_TICKS = 3;
 
         // ================================================================
         // DOM REFS
@@ -946,7 +952,7 @@
         // ================================================================
 
         class HistoryManager {
-            constructor(container, maxDigits = 50) {
+            constructor(container, maxDigits = 20) {
                 this.container = container;
                 this.maxDigits = maxDigits;
                 this.digits = [];
@@ -968,9 +974,8 @@
                         '<span style="color:var(--text-muted);font-size:11px;">Waiting for data...</span>';
                     return;
                 }
-                const digits = this.digits.slice(-20);
-                const html = digits.map((d, i) => {
-                    const isRecent = i >= digits.length - 5;
+                const html = this.digits.map((d, i) => {
+                    const isRecent = i >= this.digits.length - 5;
                     const isHighlight = d === this.lastDigit;
                     return `<span class="history-digit ${isRecent ? 'recent' : ''} ${isHighlight ? 'highlight' : ''}">${d}</span>`;
                 }).join('');
@@ -989,13 +994,6 @@
 
             get length() {
                 return this.digits.length;
-            }
-
-            getLastDigits(n) {
-                const len = this.digits.length;
-                if (len === 0) return [];
-                const start = Math.max(0, len - n);
-                return this.digits.slice(start);
             }
         }
 
@@ -1150,62 +1148,50 @@
                 this.currentPrediction = null;
                 this.isPredictionActive = false;
                 this.predictionExpired = false;
-                this.lastPrediction = null;
             }
 
             addTick(digit) {
                 this.history.push(digit);
-                if (this.history.length > 100) this.history.shift();
+                if (this.history.length > 50) this.history.shift();
                 this.totalTicks++;
-
-                // Check if we have a pending prediction
-                if (this.isPredictionActive && !this.predictionExpired && this.currentPrediction !== null) {
-                    const isMatch = digit === this.currentPrediction;
-                    if (isMatch) {
-                        this.correctPredictions++;
-                        this.isPredictionActive = false;
-                        return { result: 'correct', predicted: this.currentPrediction, actual: digit };
-                    } else {
-                        this.isPredictionActive = false;
-                        return { result: 'wrong', predicted: this.currentPrediction, actual: digit };
-                    }
-                }
+                this.lastDigit = digit;
                 return null;
             }
 
             generatePrediction() {
-                const len = this.history.length;
-
-                // If we have history, use frequency analysis
-                if (len > 0) {
-                    const freq = {};
-                    this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
-
-                    let maxFreq = 0,
-                        pred = 0;
-                    for (const [digit, count] of Object.entries(freq)) {
-                        if (count > maxFreq) { maxFreq = count;
-                            pred = parseInt(digit); }
-                    }
-
-                    // Calculate confidence based on frequency dominance
-                    const total = this.history.length;
-                    const pct = (maxFreq / total) * 100;
-                    let confidence = 30 + (pct - 10) * 2;
-                    confidence = Math.max(10, Math.min(92, confidence));
-
-                    return { prediction: pred, confidence: confidence };
+                if (this.history.length === 0) {
+                    return Math.floor(Math.random() * 10);
                 }
 
-                // Fallback: random prediction
-                return { prediction: Math.floor(Math.random() * 10), confidence: 25 + Math.random() * 20 };
+                const freq = {};
+                this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
+                let maxFreq = 0,
+                    pred = 0;
+                for (const [digit, count] of Object.entries(freq)) {
+                    if (count > maxFreq) { maxFreq = count;
+                        pred = parseInt(digit); }
+                }
+                return pred;
+            }
+
+            getConfidence(digit) {
+                if (this.history.length < 3 || digit === null) {
+                    return 35 + Math.floor(Math.random() * 20);
+                }
+
+                const freq = {};
+                this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
+                const total = this.history.length;
+                const count = freq[digit] || 0;
+                const pct = (count / total) * 100;
+                let confidence = 50 + (pct - 10) * 1.8;
+                return Math.max(10, Math.min(95, confidence));
             }
 
             startPrediction(digit) {
                 this.currentPrediction = digit;
                 this.isPredictionActive = true;
                 this.predictionExpired = false;
-                this.lastPrediction = digit;
             }
 
             expirePrediction() {
@@ -1486,61 +1472,34 @@
                 this.historyManager.add(parseInt(digit));
                 this.frequencyManager.update(this.historyManager.getHistory());
 
-                // Check if prediction matches
-                const result = this.predictionEngine.addTick(parseInt(digit));
-
-                if (result) {
-                    this.countdown.stop();
-                    DOM.actualDisplay = document.getElementById('actualDisplay');
-                    if (!DOM.actualDisplay) {
-                        // Create actual display if it doesn't exist
-                        const resultSection = document.querySelector('.result-section');
-                        const items = resultSection.querySelectorAll('.result-item');
-                        if (items.length === 3) {
-                            const newItem = document.createElement('div');
-                            newItem.className = 'result-item';
-                            newItem.innerHTML = `
-                                <div class="label">Actual</div>
-                                <div class="value" id="actualDisplay" style="color:#22d3ee;font-size:30px;font-weight:800;">-</div>
-                            `;
-                            resultSection.appendChild(newItem);
-                            DOM.actualDisplay = document.getElementById('actualDisplay');
-                            // Adjust grid
-                            resultSection.style.gridTemplateColumns = '1fr 1fr 1fr 1fr';
-                        }
-                    }
-                    if (DOM.actualDisplay) DOM.actualDisplay.textContent = result.actual;
-
-                    if (result.result === 'correct') {
+                // Check if prediction matches actual digit
+                if (this.predictionEngine.isActive() && !this.predictionEngine.isExpired()) {
+                    const predicted = this.predictionEngine.getCurrentPrediction();
+                    const actual = parseInt(digit);
+                    if (predicted === actual) {
+                        this.predictionEngine.correctPredictions++;
+                        this.logger.log(`✅ CORRECT! Predicted ${predicted} → Actual ${actual}`, 'success');
                         DOM.statusDisplay.textContent = '✅ Correct!';
                         DOM.statusDisplay.style.color = '#22d3ee';
-                        DOM.resultStatus.textContent = `✅ CORRECT! Digit ${result.predicted} was right!`;
+                        DOM.resultStatus.textContent = `✅ CORRECT! Digit ${predicted} was right!`;
                         DOM.resultStatus.className = 'result-status correct';
-                        DOM.countdownFill.className = 'countdown-bar-fill glow-green';
-                        DOM.timeLeft.textContent = '✅ Hit!';
-                        this.logger.log(`✅ Correct! Predicted ${result.predicted} → Actual ${result.actual}`, 'success');
+                        this.countdown.stop();
+                        DOM.predictBtn.disabled = false;
+                        this.predictionEngine.resetPrediction();
                     } else {
+                        this.logger.log(`❌ Predicted ${predicted} → Actual ${actual}`, 'error');
                         DOM.statusDisplay.textContent = '❌ Missed';
                         DOM.statusDisplay.style.color = '#e94560';
-                        DOM.resultStatus.textContent = `❌ Missed! Was ${result.actual}, not ${result.predicted}`;
+                        DOM.resultStatus.textContent = `❌ Missed! Was ${actual}, not ${predicted}`;
                         DOM.resultStatus.className = 'result-status wrong';
-                        DOM.countdownFill.className = 'countdown-bar-fill glow-red';
-                        DOM.timeLeft.textContent = '❌ Miss!';
-                        this.logger.log(`❌ Wrong! Predicted ${result.predicted} → Actual ${result.actual}`, 'error');
-                    }
-
-                    DOM.predictBtn.disabled = false;
-                    this.predictionEngine.resetPrediction();
-
-                    setTimeout(() => {
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
-                        DOM.resultStatus.className = 'result-status waiting';
-                    }, 3000);
+                        DOM.predictBtn.disabled = false;
+                        this.predictionEngine.resetPrediction();
+                    }
+                    DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
                 }
 
                 DOM.tickCount.textContent = this.predictionEngine.getTotalTicks();
-                DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
 
                 if (this.predictionEngine.getTotalTicks() % 5 === 0) {
                     this.logger.log(`✅ Tick #${this.predictionEngine.getTotalTicks()}: ${price} → digit ${digit}`, 'success');
@@ -1561,9 +1520,11 @@
                 DOM.statusDisplay.textContent = '⏳ Loading';
                 DOM.statusDisplay.style.color = '#f59e0b';
 
-                const waitTime = 3000 + Math.random() * 8000;
+                // Random time between 5-15 seconds
+                const waitTime = 5000 + Math.random() * 10000;
                 const startTime = Date.now();
 
+                // Update timer
                 this.loadingInterval = setInterval(() => {
                     const elapsed = Date.now() - startTime;
                     const remaining = Math.max(0, (waitTime - elapsed) / 1000);
@@ -1583,9 +1544,8 @@
                 DOM.loadingSpinner.classList.remove('active');
                 DOM.predictBtn.disabled = false;
 
-                const result = this.predictionEngine.generatePrediction();
-                const pred = result.prediction;
-                const conf = result.confidence;
+                const pred = this.predictionEngine.generatePrediction();
+                const conf = this.predictionEngine.getConfidence(pred);
 
                 DOM.predictedDisplay.textContent = pred;
                 DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
@@ -1593,9 +1553,6 @@
                 DOM.statusDisplay.style.color = '#22d3ee';
                 DOM.resultStatus.textContent = `🎯 ${pred} predicted! Valid for ${PREDICTION_WINDOW}s`;
                 DOM.resultStatus.className = 'result-status active';
-
-                // Reset actual display if exists
-                if (DOM.actualDisplay) DOM.actualDisplay.textContent = '...';
 
                 this.predictionEngine.startPrediction(pred);
                 this.countdown.start();
@@ -1618,21 +1575,13 @@
                         return;
                     }
 
-                    if (this.predictionEngine.getTotalTicks() < MIN_TICKS) {
-                        DOM.resultStatus.textContent = `⏳ Need ${MIN_TICKS}+ ticks... (${this.predictionEngine.getTotalTicks()}/${MIN_TICKS})`;
-                        DOM.resultStatus.className = 'result-status waiting';
-                        this.logger.log(`⏳ Not enough data (${this.predictionEngine.getTotalTicks()}/${MIN_TICKS})`, 'info');
-                        return;
-                    }
-
+                    // Reset previous prediction display
                     DOM.predictedDisplay.textContent = '-';
                     DOM.confidenceDisplay.textContent = '-';
                     DOM.statusDisplay.textContent = '⏳ Loading';
                     DOM.statusDisplay.style.color = '#f59e0b';
                     DOM.resultStatus.textContent = '⏳ Analyzing market patterns...';
                     DOM.resultStatus.className = 'result-status loading';
-
-                    if (DOM.actualDisplay) DOM.actualDisplay.textContent = '-';
 
                     this._startLoading();
                 });
@@ -1664,7 +1613,6 @@
                     DOM.accDisplay.textContent = '0%';
                     DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
                     DOM.resultStatus.className = 'result-status waiting';
-                    if (DOM.actualDisplay) DOM.actualDisplay.textContent = '-';
 
                     this.predictionEngine.history = [];
                     this.predictionEngine.totalTicks = 0;

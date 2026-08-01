@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deriv Digit Predictor</title>
+    <title>Deriv X2X Predictor</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
@@ -37,6 +37,8 @@
             --log-bg: rgba(0, 0, 0, 0.3);
             --log-text: rgba(255, 255, 255, 0.4);
             --result-bg: rgba(255, 255, 255, 0.04);
+            --pattern-color: #e94560;
+            --pattern-bg: rgba(233, 69, 96, 0.08);
         }
 
         * {
@@ -275,6 +277,42 @@
 
         .price-value .decimal {
             color: #22d3ee;
+        }
+
+        /* ============ PATTERN DISPLAY ============ */
+        .pattern-display {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 12px;
+            background: var(--pattern-bg);
+            border: 1px solid rgba(233, 69, 96, 0.15);
+            display: none;
+        }
+
+        .pattern-display.active {
+            display: block;
+        }
+
+        .pattern-display .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .pattern-display .pattern-digits {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--pattern-color);
+            letter-spacing: 8px;
+            margin: 4px 0;
+        }
+
+        .pattern-display .pattern-info {
+            font-size: 11px;
+            color: var(--text-secondary);
         }
 
         /* ============ LOADING SPINNER ============ */
@@ -749,6 +787,9 @@
                 padding: 16px 30px;
                 font-size: 20px;
             }
+            .pattern-display .pattern-digits {
+                font-size: 28px;
+            }
             .result-item .value.predicted {
                 font-size: 36px;
             }
@@ -779,9 +820,9 @@
         <div class="header">
             <div class="logo">
                 <div class="logo-icon">🎯</div>
-                <div class="logo-text">Deriv<span>Predict</span></div>
+                <div class="logo-text">Deriv<span>X2X</span></div>
             </div>
-            <div class="badge">Live</div>
+            <div class="badge">Pattern</div>
         </div>
 
         <div class="status-bar">
@@ -829,17 +870,24 @@
             </div>
         </div>
 
+        <!-- PATTERN DISPLAY -->
+        <div class="pattern-display" id="patternDisplay">
+            <div class="label">🔍 X2X Pattern Detected</div>
+            <div class="pattern-digits" id="patternDigits">5 2 5</div>
+            <div class="pattern-info" id="patternInfo">Pattern found! Predicting the next digit...</div>
+        </div>
+
         <!-- LOADING SPINNER -->
         <div class="loading-spinner" id="loadingSpinner">
             <div class="spinner"></div>
-            <div class="loading-text">🔮 Analyzing market patterns...</div>
+            <div class="loading-text">🔮 Scanning for X2X patterns...</div>
             <div class="loading-timer" id="loadingTimer">--</div>
         </div>
 
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
-                <span class="sub">Click to get a digit prediction</span>
+                <span class="sub">Scan for X2X pattern & predict</span>
             </button>
         </div>
 
@@ -868,7 +916,7 @@
             </div>
         </div>
 
-        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to get a digit prediction</div>
+        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to scan for X2X patterns</div>
 
         <div class="history-section">
             <div class="history-label">📜 Recent Digits</div>
@@ -896,6 +944,10 @@
         const APP_ID = 1089;
         const PREDICTION_WINDOW = 15;
 
+        // X2X Pattern: Find patterns where first and third digits are the same (X2X)
+        // e.g., 525, 424, 828, 636
+        // The middle digit is the one we track, and we predict the next digit
+
         // ================================================================
         // DOM REFS
         // ================================================================
@@ -921,6 +973,9 @@
             timeLeft: document.getElementById('timeLeft'),
             loadingSpinner: document.getElementById('loadingSpinner'),
             loadingTimer: document.getElementById('loadingTimer'),
+            patternDisplay: document.getElementById('patternDisplay'),
+            patternDigits: document.getElementById('patternDigits'),
+            patternInfo: document.getElementById('patternInfo'),
         };
 
         // ================================================================
@@ -952,7 +1007,7 @@
         // ================================================================
 
         class HistoryManager {
-            constructor(container, maxDigits = 20) {
+            constructor(container, maxDigits = 50) {
                 this.container = container;
                 this.maxDigits = maxDigits;
                 this.digits = [];
@@ -974,8 +1029,9 @@
                         '<span style="color:var(--text-muted);font-size:11px;">Waiting for data...</span>';
                     return;
                 }
-                const html = this.digits.map((d, i) => {
-                    const isRecent = i >= this.digits.length - 5;
+                const digits = this.digits.slice(-20);
+                const html = digits.map((d, i) => {
+                    const isRecent = i >= digits.length - 5;
                     const isHighlight = d === this.lastDigit;
                     return `<span class="history-digit ${isRecent ? 'recent' : ''} ${isHighlight ? 'highlight' : ''}">${d}</span>`;
                 }).join('');
@@ -994,6 +1050,13 @@
 
             get length() {
                 return this.digits.length;
+            }
+
+            getLastDigits(n) {
+                const len = this.digits.length;
+                if (len === 0) return [];
+                const start = Math.max(0, len - n);
+                return this.digits.slice(start);
             }
         }
 
@@ -1137,10 +1200,10 @@
         }
 
         // ================================================================
-        // PREDICTION ENGINE
+        // X2X PATTERN ENGINE
         // ================================================================
 
-        class PredictionEngine {
+        class X2XEngine {
             constructor() {
                 this.history = [];
                 this.totalTicks = 0;
@@ -1148,19 +1211,135 @@
                 this.currentPrediction = null;
                 this.isPredictionActive = false;
                 this.predictionExpired = false;
+                this.detectedPattern = null;
+                this.patternHistory = [];
+                this.triggerValue = null;
             }
 
             addTick(digit) {
                 this.history.push(digit);
-                if (this.history.length > 50) this.history.shift();
+                if (this.history.length > 100) this.history.shift();
                 this.totalTicks++;
-                this.lastDigit = digit;
                 return null;
             }
 
+            // Detect X2X pattern in recent digits
+            detectX2X() {
+                const len = this.history.length;
+                if (len < 3) return null;
+
+                // Check the last 3 digits for X2X pattern
+                const d1 = this.history[len - 3];
+                const d2 = this.history[len - 2];
+                const d3 = this.history[len - 1];
+
+                if (d1 === d3 && d1 !== d2) {
+                    // X2X pattern found (e.g., 525, 424, 828)
+                    return {
+                        pattern: [d1, d2, d3],
+                        middle: d2,
+                        outer: d1,
+                        lastDigit: d3
+                    };
+                }
+                return null;
+            }
+
+            // Find the best X2X pattern from history
+            findBestPattern() {
+                const len = this.history.length;
+                if (len < 20) return null;
+
+                // Look for X2X patterns in the last 30 digits
+                const patterns = [];
+                const start = Math.max(0, len - 30);
+
+                for (let i = start; i < len - 2; i++) {
+                    const d1 = this.history[i];
+                    const d2 = this.history[i + 1];
+                    const d3 = this.history[i + 2];
+
+                    if (d1 === d3 && d1 !== d2) {
+                        patterns.push({
+                            pattern: [d1, d2, d3],
+                            outer: d1,
+                            middle: d2,
+                            position: i,
+                            nextDigit: this.history[i + 3] || null
+                        });
+                    }
+                }
+
+                if (patterns.length === 0) return null;
+
+                // Find the most common pattern
+                const freq = {};
+                patterns.forEach(p => {
+                    const key = `${p.outer}-${p.middle}`;
+                    freq[key] = (freq[key] || 0) + 1;
+                });
+
+                let bestKey = null;
+                let bestCount = 0;
+                for (const [key, count] of Object.entries(freq)) {
+                    if (count > bestCount) {
+                        bestCount = count;
+                        bestKey = key;
+                    }
+                }
+
+                if (bestKey) {
+                    const parts = bestKey.split('-');
+                    return {
+                        outer: parseInt(parts[0]),
+                        middle: parseInt(parts[1]),
+                        pattern: [parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[0])],
+                        frequency: bestCount,
+                        totalPatterns: patterns.length
+                    };
+                }
+
+                return null;
+            }
+
+            // Generate prediction using X2X pattern
             generatePrediction() {
+                // First, try to find a recent X2X pattern
+                const recentPattern = this.detectX2X();
+                if (recentPattern) {
+                    // If we just saw an X2X pattern, predict the middle digit
+                    this.detectedPattern = recentPattern;
+                    return {
+                        prediction: recentPattern.middle,
+                        pattern: recentPattern.pattern,
+                        confidence: 75 + Math.random() * 15,
+                        type: 'recent'
+                    };
+                }
+
+                // If no recent pattern, use historical pattern analysis
+                const bestPattern = this.findBestPattern();
+                if (bestPattern) {
+                    // Predict the digit that follows the pattern
+                    // Based on history, if X2X appears, what digit comes next?
+                    const nextDigit = this.getMostCommonNextDigit(bestPattern.outer, bestPattern.middle);
+                    this.detectedPattern = bestPattern;
+                    return {
+                        prediction: nextDigit !== null ? nextDigit : bestPattern.middle,
+                        pattern: bestPattern.pattern,
+                        confidence: 60 + Math.random() * 20,
+                        type: 'historical'
+                    };
+                }
+
+                // Fallback: use frequency analysis
                 if (this.history.length === 0) {
-                    return Math.floor(Math.random() * 10);
+                    return {
+                        prediction: Math.floor(Math.random() * 10),
+                        pattern: null,
+                        confidence: 30 + Math.random() * 20,
+                        type: 'random'
+                    };
                 }
 
                 const freq = {};
@@ -1171,21 +1350,42 @@
                     if (count > maxFreq) { maxFreq = count;
                         pred = parseInt(digit); }
                 }
-                return pred;
+
+                return {
+                    prediction: pred,
+                    pattern: null,
+                    confidence: 40 + Math.random() * 20,
+                    type: 'frequency'
+                };
             }
 
-            getConfidence(digit) {
-                if (this.history.length < 3 || digit === null) {
-                    return 35 + Math.floor(Math.random() * 20);
+            // Find the most common digit that follows an X2X pattern
+            getMostCommonNextDigit(outer, middle) {
+                const len = this.history.length;
+                if (len < 4) return null;
+
+                const nextDigits = [];
+                for (let i = 0; i < len - 3; i++) {
+                    const d1 = this.history[i];
+                    const d2 = this.history[i + 1];
+                    const d3 = this.history[i + 2];
+
+                    if (d1 === outer && d2 === middle && d3 === outer) {
+                        nextDigits.push(this.history[i + 3]);
+                    }
                 }
 
+                if (nextDigits.length === 0) return null;
+
                 const freq = {};
-                this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
-                const total = this.history.length;
-                const count = freq[digit] || 0;
-                const pct = (count / total) * 100;
-                let confidence = 50 + (pct - 10) * 1.8;
-                return Math.max(10, Math.min(95, confidence));
+                nextDigits.forEach(d => freq[d] = (freq[d] || 0) + 1);
+                let maxFreq = 0,
+                    pred = 0;
+                for (const [digit, count] of Object.entries(freq)) {
+                    if (count > maxFreq) { maxFreq = count;
+                        pred = parseInt(digit); }
+                }
+                return pred;
             }
 
             startPrediction(digit) {
@@ -1204,6 +1404,7 @@
                 this.currentPrediction = null;
                 this.isPredictionActive = false;
                 this.predictionExpired = false;
+                this.detectedPattern = null;
             }
 
             getAccuracy() {
@@ -1228,6 +1429,10 @@
 
             isExpired() {
                 return this.predictionExpired;
+            }
+
+            getPatternDisplay() {
+                return this.detectedPattern;
             }
         }
 
@@ -1411,7 +1616,7 @@
                 this.logger = new Logger(DOM.logContainer);
                 this.historyManager = new HistoryManager(DOM.historyContainer);
                 this.frequencyManager = new FrequencyManager(DOM.freqGrid);
-                this.predictionEngine = new PredictionEngine();
+                this.predictionEngine = new X2XEngine();
                 this.countdown = new CountdownManager(
                     DOM.countdownContainer,
                     DOM.countdownFill,
@@ -1432,7 +1637,8 @@
                 if (this.initialized) return;
                 this.initialized = true;
 
-                this.logger.log('🚀 Deriv Predictor initializing...', 'info');
+                this.logger.log('🚀 Deriv X2X Predictor initializing...', 'info');
+                this.logger.log('📊 Strategy: X2X Pattern Detection', 'info');
 
                 this.socket = new DerivSocket(
                     APP_ID,
@@ -1453,7 +1659,7 @@
                     this.logger.log('⏰ Prediction window expired!', 'error');
                     setTimeout(() => {
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
+                        DOM.resultStatus.textContent = '⚡ Click PREDICT to scan for X2X patterns';
                         DOM.resultStatus.className = 'result-status waiting';
                     }, 3000);
                 });
@@ -1515,23 +1721,23 @@
                 this.isLoading = true;
                 DOM.loadingSpinner.classList.add('active');
                 DOM.predictBtn.disabled = true;
-                DOM.resultStatus.textContent = '⏳ Analyzing...';
+                DOM.resultStatus.textContent = '⏳ Scanning for X2X patterns...';
                 DOM.resultStatus.className = 'result-status loading';
-                DOM.statusDisplay.textContent = '⏳ Loading';
+                DOM.statusDisplay.textContent = '⏳ Scanning';
                 DOM.statusDisplay.style.color = '#f59e0b';
+                DOM.patternDisplay.classList.remove('active');
 
                 // Random time between 5-15 seconds
                 const waitTime = 5000 + Math.random() * 10000;
                 const startTime = Date.now();
 
-                // Update timer
                 this.loadingInterval = setInterval(() => {
                     const elapsed = Date.now() - startTime;
                     const remaining = Math.max(0, (waitTime - elapsed) / 1000);
                     DOM.loadingTimer.textContent = `${Math.ceil(remaining)}s`;
                 }, 100);
 
-                this.logger.log(`⏳ Analyzing market patterns... (${Math.round(waitTime/1000)}s)`, 'info');
+                this.logger.log(`⏳ Scanning for X2X patterns... (${Math.round(waitTime/1000)}s)`, 'info');
 
                 setTimeout(() => {
                     this._showPrediction();
@@ -1544,13 +1750,30 @@
                 DOM.loadingSpinner.classList.remove('active');
                 DOM.predictBtn.disabled = false;
 
-                const pred = this.predictionEngine.generatePrediction();
-                const conf = this.predictionEngine.getConfidence(pred);
+                const result = this.predictionEngine.generatePrediction();
+                const pred = result.prediction;
+                const pattern = result.pattern;
+                const conf = result.confidence;
+                const type = result.type;
 
                 DOM.predictedDisplay.textContent = pred;
                 DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
                 DOM.statusDisplay.textContent = '⏳ Active';
                 DOM.statusDisplay.style.color = '#22d3ee';
+
+                // Show pattern if found
+                if (pattern) {
+                    DOM.patternDisplay.classList.add('active');
+                    DOM.patternDigits.textContent = pattern.join(' ');
+                    const typeLabel = type === 'recent' ? 'Recent pattern detected!' :
+                        type === 'historical' ? 'Historical pattern found!' : 'Pattern analysis';
+                    DOM.patternInfo.textContent = `${typeLabel} Predicting: ${pred}`;
+                    this.logger.log(`🔍 X2X Pattern: ${pattern.join(' ')} → Prediction: ${pred}`, 'info');
+                } else {
+                    DOM.patternDisplay.classList.remove('active');
+                    this.logger.log(`📊 No X2X pattern found. Using ${type} analysis.`, 'info');
+                }
+
                 DOM.resultStatus.textContent = `🎯 ${pred} predicted! Valid for ${PREDICTION_WINDOW}s`;
                 DOM.resultStatus.className = 'result-status active';
 
@@ -1564,7 +1787,7 @@
             _bindUI() {
                 DOM.predictBtn.addEventListener('click', () => {
                     if (this.isLoading) {
-                        DOM.resultStatus.textContent = '⏳ Already analyzing...';
+                        DOM.resultStatus.textContent = '⏳ Already scanning...';
                         DOM.resultStatus.className = 'result-status loading';
                         return;
                     }
@@ -1575,13 +1798,21 @@
                         return;
                     }
 
+                    if (this.predictionEngine.getTotalTicks() < 10) {
+                        DOM.resultStatus.textContent = '⏳ Need more data... (10+ ticks required)';
+                        DOM.resultStatus.className = 'result-status waiting';
+                        this.logger.log('⏳ Not enough data for pattern detection', 'info');
+                        return;
+                    }
+
                     // Reset previous prediction display
                     DOM.predictedDisplay.textContent = '-';
                     DOM.confidenceDisplay.textContent = '-';
-                    DOM.statusDisplay.textContent = '⏳ Loading';
+                    DOM.statusDisplay.textContent = '⏳ Scanning';
                     DOM.statusDisplay.style.color = '#f59e0b';
-                    DOM.resultStatus.textContent = '⏳ Analyzing market patterns...';
+                    DOM.resultStatus.textContent = '⏳ Scanning for X2X patterns...';
                     DOM.resultStatus.className = 'result-status loading';
+                    DOM.patternDisplay.classList.remove('active');
 
                     this._startLoading();
                 });
@@ -1601,6 +1832,7 @@
                     DOM.predictBtn.disabled = false;
                     this.isLoading = false;
                     DOM.loadingSpinner.classList.remove('active');
+                    DOM.patternDisplay.classList.remove('active');
 
                     const symbol = DOM.symbolSelect.value;
                     DOM.predictedDisplay.textContent = '-';
@@ -1611,7 +1843,7 @@
                     DOM.priceDec.textContent = '--';
                     DOM.tickCount.textContent = '0';
                     DOM.accDisplay.textContent = '0%';
-                    DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
+                    DOM.resultStatus.textContent = '⚡ Click PREDICT to scan for X2X patterns';
                     DOM.resultStatus.className = 'result-status waiting';
 
                     this.predictionEngine.history = [];

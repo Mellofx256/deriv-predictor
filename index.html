@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deriv Match Predictor</title>
+    <title>Deriv Digit Predictor</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
@@ -296,54 +296,18 @@
             color: #22d3ee;
         }
 
-        .digit-selector {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 5px;
-            margin: 14px 0 16px;
-        }
-
-        .digit-btn {
-            padding: 10px 0;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            background: var(--bg-input);
-            color: var(--text-secondary);
-            font-size: 20px;
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-        }
-
-        .digit-btn:hover {
-            border-color: rgba(108, 60, 176, 0.4);
-            transform: scale(1.05);
-            background: rgba(108, 60, 176, 0.12);
-            color: #ffffff;
-        }
-
-        .digit-btn.selected {
-            border-color: #e94560;
-            background: rgba(233, 69, 96, 0.15);
-            color: #e94560;
-            box-shadow: 0 0 25px rgba(233, 69, 96, 0.08);
-        }
-
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
         }
 
         .predict-btn {
-            padding: 16px 50px;
+            padding: 20px 50px;
             border: none;
-            border-radius: 14px;
+            border-radius: 16px;
             background: var(--predict-btn-bg);
             color: var(--predict-btn-text);
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 800;
             font-family: 'Inter', sans-serif;
             cursor: pointer;
@@ -365,7 +329,7 @@
             bottom: -2px;
             background: linear-gradient(45deg, #6c3cb0, #e94560, #22d3ee, #6c3cb0);
             background-size: 300% 300%;
-            border-radius: 16px;
+            border-radius: 18px;
             z-index: -1;
             animation: btnGlow 4s ease-in-out infinite;
             opacity: 0;
@@ -547,10 +511,15 @@
             text-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
         }
 
-        .result-item .value.confidence {
-            font-size: 24px;
+        .result-item .value.actual {
             color: #22d3ee;
             text-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
+        }
+
+        .result-item .value.confidence {
+            font-size: 24px;
+            color: #10b981;
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
         }
 
         .result-status {
@@ -588,6 +557,12 @@
             background: rgba(233, 69, 96, 0.08);
             border-color: rgba(233, 69, 96, 0.2);
             animation: pulseText 0.5s ease-in-out infinite alternate;
+        }
+
+        .result-status.info {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.15);
         }
 
         .history-section {
@@ -740,16 +715,9 @@
             .price-value {
                 font-size: 30px;
             }
-            .digit-selector {
-                gap: 4px;
-            }
-            .digit-btn {
-                font-size: 16px;
-                padding: 8px 0;
-            }
             .predict-btn {
-                padding: 14px 30px;
-                font-size: 17px;
+                padding: 16px 30px;
+                font-size: 20px;
             }
             .result-item .value {
                 font-size: 26px;
@@ -778,7 +746,7 @@
         <div class="header">
             <div class="logo">
                 <div class="logo-icon">🎯</div>
-                <div class="logo-text">Deriv<span>Match</span></div>
+                <div class="logo-text">Deriv<span>Predict</span></div>
             </div>
             <div class="badge">Live</div>
         </div>
@@ -828,26 +796,15 @@
             </div>
         </div>
 
-        <div class="digit-selector" id="digitSelector">
-            <button class="digit-btn" data-digit="0">0</button>
-            <button class="digit-btn" data-digit="1">1</button>
-            <button class="digit-btn" data-digit="2">2</button>
-            <button class="digit-btn" data-digit="3">3</button>
-            <button class="digit-btn" data-digit="4">4</button>
-            <button class="digit-btn" data-digit="5">5</button>
-            <button class="digit-btn" data-digit="6">6</button>
-            <button class="digit-btn" data-digit="7">7</button>
-            <button class="digit-btn" data-digit="8">8</button>
-            <button class="digit-btn" data-digit="9">9</button>
-        </div>
-
+        <!-- PREDICT BUTTON (Center) -->
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
-                <span class="sub">15-second prediction window</span>
+                <span class="sub">Click to predict the next digit</span>
             </button>
         </div>
 
+        <!-- COUNTDOWN -->
         <div class="countdown-container" id="countdownContainer">
             <div class="countdown-label">
                 <span>⏳ Prediction Window</span>
@@ -858,14 +815,15 @@
             </div>
         </div>
 
+        <!-- RESULTS -->
         <div class="result-section">
-            <div class="result-item">
-                <div class="label">Selected</div>
-                <div class="value" id="selectedDisplay">-</div>
-            </div>
             <div class="result-item">
                 <div class="label">Predicted</div>
                 <div class="value predicted" id="predictedDisplay">-</div>
+            </div>
+            <div class="result-item">
+                <div class="label">Actual</div>
+                <div class="value actual" id="actualDisplay">-</div>
             </div>
             <div class="result-item">
                 <div class="label">Confidence</div>
@@ -873,8 +831,9 @@
             </div>
         </div>
 
-        <div class="result-status waiting" id="resultStatus">⚡ Select a digit and click PREDICT</div>
+        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to start</div>
 
+        <!-- HISTORY -->
         <div class="history-section">
             <div class="history-label">📜 Recent Digits</div>
             <div class="history-digits" id="historyContainer">
@@ -882,11 +841,13 @@
             </div>
         </div>
 
+        <!-- FREQUENCY -->
         <div class="frequency-section">
             <div class="frequency-title">📊 Digit Frequency</div>
             <div class="frequency-grid" id="freqGrid"></div>
         </div>
 
+        <!-- LOG -->
         <div class="log-section" id="logContainer">
             <div class="log-entry info">🚀 System initializing...</div>
         </div>
@@ -895,15 +856,10 @@
 
     <script>
         // ================================================================
-        // CONFIGURATION - UPDATE THESE WITH YOUR VALUES
+        // CONFIGURATION - USING PUBLIC APP ID (NO AUTH REQUIRED)
         // ================================================================
 
-        // Your Deriv App ID (string format from dashboard)
-        const APP_ID = "33ZhqJCt0dF2IoKy5N4HH";
-        
-        // Your Personal Access Token with 'trade' scope
-        const API_TOKEN = "pat_4ed01f21a3f1f219f1bdaa23af60da719bd1d5a797536db3cdefc2adb62db91d";
-
+        const APP_ID = 1089;
         const PREDICTION_WINDOW = 15;
 
         // ================================================================
@@ -922,14 +878,13 @@
             statusText: document.getElementById('statusText'),
             symbolSelect: document.getElementById('symbol'),
             predictBtn: document.getElementById('predictBtn'),
-            selectedDisplay: document.getElementById('selectedDisplay'),
             predictedDisplay: document.getElementById('predictedDisplay'),
+            actualDisplay: document.getElementById('actualDisplay'),
             confidenceDisplay: document.getElementById('confidenceDisplay'),
             resultStatus: document.getElementById('resultStatus'),
             countdownContainer: document.getElementById('countdownContainer'),
             countdownFill: document.getElementById('countdownFill'),
             timeLeft: document.getElementById('timeLeft'),
-            digitSelector: document.getElementById('digitSelector'),
         };
 
         // ================================================================
@@ -1157,10 +1112,10 @@
                 this.correctPredictions = 0;
                 this.lastPrediction = null;
                 this.lastDigit = null;
-                this.selectedDigit = null;
                 this.pendingPrediction = null;
                 this.isWaiting = false;
                 this.expired = false;
+                this.predictedDigit = null;
             }
 
             addTick(digit) {
@@ -1169,22 +1124,33 @@
                 this.totalTicks++;
                 this.lastDigit = digit;
 
+                // Check if we have a pending prediction
                 if (this.pendingPrediction !== null && this.isWaiting && !this.expired) {
-                    const isMatch = digit === this.selectedDigit;
-                    if (this.pendingPrediction === this.selectedDigit) {
-                        if (isMatch) {
-                            this.correctPredictions++;
-                            return { result: 'correct', digit: digit, selected: this.selectedDigit };
-                        } else {
-                            return { result: 'wrong', digit: digit, selected: this.selectedDigit };
-                        }
+                    const isMatch = digit === this.predictedDigit;
+                    if (isMatch) {
+                        this.correctPredictions++;
+                        return { result: 'correct', digit: digit, predicted: this.predictedDigit };
+                    } else {
+                        return { result: 'wrong', digit: digit, predicted: this.predictedDigit };
                     }
                 }
                 return null;
             }
 
             predict() {
-                if (this.history.length < 10) return null;
+                if (this.history.length < 10) {
+                    // If not enough data, use frequency analysis on available data
+                    if (this.history.length === 0) return null;
+                    const freq = {};
+                    this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
+                    let maxFreq = 0,
+                        pred = 0;
+                    for (const [digit, count] of Object.entries(freq)) {
+                        if (count > maxFreq) { maxFreq = count;
+                            pred = parseInt(digit); }
+                    }
+                    return pred;
+                }
 
                 const freq = {};
                 this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
@@ -1212,11 +1178,8 @@
                 return this.totalTicks > 0 ? Math.round((this.correctPredictions / this.totalTicks) * 100) : 0;
             }
 
-            setSelectedDigit(digit) {
-                this.selectedDigit = digit;
-            }
-
             startPrediction(digit) {
+                this.predictedDigit = digit;
                 this.pendingPrediction = digit;
                 this.isWaiting = true;
                 this.expired = false;
@@ -1232,6 +1195,7 @@
                 this.pendingPrediction = null;
                 this.isWaiting = false;
                 this.expired = false;
+                this.predictedDigit = null;
             }
 
             getHistory() {
@@ -1244,20 +1208,18 @@
         }
 
         // ================================================================
-        // DERIV WEBSOCKET MANAGER - Using the exact same method as the Playground
+        // DERIV WEBSOCKET MANAGER
         // ================================================================
 
         class DerivSocket {
-            constructor(appId, apiToken, onTick, onStatus, onLog) {
+            constructor(appId, onTick, onStatus, onLog) {
                 this.appId = appId;
-                this.apiToken = apiToken;
                 this.onTick = onTick;
                 this.onStatus = onStatus;
                 this.onLog = onLog;
                 this.ws = null;
                 this.isConnected = false;
                 this.isConnecting = false;
-                this.isAuthorized = false;
                 this.reconnectAttempts = 0;
                 this.maxReconnectDelay = 30000;
                 this.reconnectDelay = 1000;
@@ -1274,7 +1236,6 @@
                 this._setStatus('connecting', '⏳ Connecting...');
                 this.onLog('Connecting to Deriv WebSocket...', 'info');
 
-                // Use the same endpoint as the Playground
                 const url = `wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`;
 
                 try {
@@ -1283,15 +1244,14 @@
                     this.ws.onmessage = this._onMessage.bind(this);
                     this.ws.onclose = this._onClose.bind(this);
                     this.ws.onerror = this._onError.bind(this);
-                    
-                    // Connection timeout
+
                     setTimeout(() => {
                         if (this.isConnecting && !this.isConnected) {
                             this.onLog('Connection timeout - retrying...', 'error');
                             this.ws.close();
                         }
                     }, 10000);
-                    
+
                 } catch (err) {
                     this.onLog(`Connection error: ${err.message}`, 'error');
                     this.isConnecting = false;
@@ -1304,57 +1264,32 @@
                 this.isConnecting = false;
                 this.reconnectAttempts = 0;
                 this.reconnectDelay = 1000;
-                this._setStatus('connecting', '🔑 Authorizing...');
-                this.onLog('WebSocket connected, authorizing...', 'info');
+                this._setStatus('online', '✅ Connected');
+                this.onLog('WebSocket connected', 'success');
 
-                // Send authorization with API token (exactly like Playground)
-                const authMsg = {
-                    authorize: this.apiToken
-                };
-                this.ws.send(JSON.stringify(authMsg));
-                this.onLog('📤 Sent authorize request', 'info');
+                setTimeout(() => {
+                    this._subscribe(this.currentSymbol);
+                }, 500);
             }
 
             _onMessage(event) {
                 try {
                     const data = JSON.parse(event.data);
 
-                    // Handle authorization response
-                    if (data.msg_type === 'authorize') {
-                        if (data.authorize) {
-                            this.isAuthorized = true;
-                            this._setStatus('online', '✅ Connected');
-                            this.onLog('✅ Authorization successful!', 'success');
-                            
-                            // Subscribe to current symbol after authorization
-                            setTimeout(() => {
-                                this._subscribe(this.currentSymbol);
-                            }, 500);
-                        } else if (data.error) {
-                            this.onLog(`❌ Authorization error: ${data.error.message}`, 'error');
-                            this._setStatus('offline', '❌ Auth failed');
-                            this.isAuthorized = false;
-                        }
-                    }
-
-                    // Handle tick data
                     if (data.msg_type === 'tick' && data.tick) {
                         this.onTick(data.tick);
                     }
 
-                    // Handle subscription confirmation
                     if (data.msg_type === 'subscription') {
                         this.isSubscribed = true;
                         this.onLog(`✅ Subscribed to ${this.currentSymbol}`, 'success');
                     }
 
-                    // Handle errors
                     if (data.msg_type === 'error') {
                         const msg = data.error?.message || 'Unknown error';
                         this.onLog(`❌ API Error: ${msg}`, 'error');
                     }
 
-                    // Handle ping/pong (keep connection alive)
                     if (data.msg_type === 'ping') {
                         this.ws.send(JSON.stringify({ pong: data.ping }));
                     }
@@ -1368,7 +1303,6 @@
                 this.isConnected = false;
                 this.isConnecting = false;
                 this.isSubscribed = false;
-                this.isAuthorized = false;
                 this._setStatus('offline', '🔌 Disconnected');
                 this.onLog(`Disconnected (code: ${event.code})`, 'error');
 
@@ -1387,7 +1321,7 @@
                 this.reconnectAttempts++;
                 const delay = Math.min(this.reconnectDelay, this.maxReconnectDelay);
                 this.onLog(`Reconnecting in ${delay/1000}s... (attempt ${this.reconnectAttempts})`, 'info');
-                
+
                 if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = setTimeout(() => {
                     if (!this.isConnected && !this.isClosing) {
@@ -1398,8 +1332,8 @@
             }
 
             _subscribe(symbol) {
-                if (!this.isConnected || !this.ws || !this.isAuthorized) {
-                    this.onLog(`⚠️ Cannot subscribe: not connected/authorized`, 'error');
+                if (!this.isConnected || !this.ws) {
+                    this.onLog(`⚠️ Cannot subscribe: not connected`, 'error');
                     return;
                 }
 
@@ -1415,7 +1349,7 @@
             subscribe(symbol) {
                 if (symbol === this.currentSymbol && this.isSubscribed) return;
                 this.currentSymbol = symbol;
-                if (this.isConnected && this.isAuthorized) {
+                if (this.isConnected) {
                     this._subscribe(symbol);
                 }
             }
@@ -1431,7 +1365,6 @@
                 }
                 this.isConnected = false;
                 this.isConnecting = false;
-                this.isAuthorized = false;
                 this._setStatus('offline', '🔌 Disconnected');
                 this.onLog('Disconnected manually', 'info');
             }
@@ -1441,7 +1374,7 @@
             }
 
             isActive() {
-                return this.isConnected && this.isAuthorized;
+                return this.isConnected;
             }
         }
 
@@ -1463,7 +1396,6 @@
                 );
 
                 this.socket = null;
-                this.selectedDigit = null;
                 this.initialized = false;
 
                 this._bindUI();
@@ -1474,12 +1406,10 @@
                 if (this.initialized) return;
                 this.initialized = true;
 
-                this.logger.log('🚀 Deriv Match Predictor initializing...', 'info');
+                this.logger.log('🚀 Deriv Predictor initializing...', 'info');
 
-                // Start WebSocket with correct authentication
                 this.socket = new DerivSocket(
                     APP_ID,
-                    API_TOKEN,
                     this._handleTick.bind(this),
                     this._handleStatus.bind(this),
                     this.logger.log.bind(this.logger)
@@ -1487,7 +1417,6 @@
 
                 this.socket.connect();
 
-                // Set countdown expiry handler
                 this.countdown.setExpiredCallback(() => {
                     this.predictionEngine.expirePrediction();
                     DOM.resultStatus.textContent = '⏰ Prediction expired! No tick received.';
@@ -1496,7 +1425,7 @@
                     DOM.predictBtn.disabled = false;
                     setTimeout(() => {
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Select a digit and click PREDICT';
+                        DOM.resultStatus.textContent = '⚡ Click PREDICT to start';
                         DOM.resultStatus.className = 'result-status waiting';
                     }, 3000);
                 });
@@ -1508,57 +1437,47 @@
                 const price = tick.quote;
                 const digit = String(price).slice(-1);
 
-                // Update price
                 const [intPart, decPart] = price.toFixed(3).split('.');
                 DOM.priceInt.textContent = intPart;
                 DOM.priceDec.textContent = '.' + decPart;
 
-                // Update history
                 this.historyManager.add(parseInt(digit));
                 this.historyManager.setLastDigit(parseInt(digit));
-
-                // Update frequency
                 this.frequencyManager.update(this.historyManager.getHistory());
 
-                // Update prediction engine
                 const result = this.predictionEngine.addTick(parseInt(digit));
 
-                // Check prediction result
                 if (result) {
                     this.countdown.stop();
+                    DOM.actualDisplay.textContent = result.digit;
+
                     if (result.result === 'correct') {
-                        DOM.resultStatus.textContent = '✅ CORRECT! Digit matched your prediction!';
+                        DOM.resultStatus.textContent = '✅ CORRECT! Prediction was right!';
                         DOM.resultStatus.className = 'result-status correct';
-                        this.logger.log(`✅ Correct! ${result.selected} matched!`, 'success');
+                        this.logger.log(`✅ Correct! Predicted ${result.predicted} → Actual ${result.digit}`, 'success');
                         DOM.countdownFill.className = 'countdown-bar-fill glow-green';
                         DOM.timeLeft.textContent = '✅ Hit!';
                     } else {
-                        DOM.resultStatus.textContent = `❌ WRONG! Was ${result.digit}, not ${result.selected}`;
+                        DOM.resultStatus.textContent = `❌ WRONG! Predicted ${result.predicted} → Actual ${result.digit}`;
                         DOM.resultStatus.className = 'result-status wrong';
-                        this.logger.log(`❌ Wrong! Was ${result.digit}, not ${result.selected}`, 'error');
+                        this.logger.log(`❌ Wrong! Predicted ${result.predicted} → Actual ${result.digit}`, 'error');
                         DOM.countdownFill.className = 'countdown-bar-fill glow-red';
                         DOM.timeLeft.textContent = '❌ Miss!';
                     }
+
                     this.predictionEngine.resetPrediction();
                     DOM.predictBtn.disabled = false;
+
                     setTimeout(() => {
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Select a digit and click PREDICT';
+                        DOM.resultStatus.textContent = '⚡ Click PREDICT to start';
                         DOM.resultStatus.className = 'result-status waiting';
                     }, 3000);
                 }
 
-                // Update confidence
-                if (this.selectedDigit !== null) {
-                    const conf = this.predictionEngine.getConfidence(this.selectedDigit);
-                    DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
-                }
-
-                // Update stats
                 DOM.tickCount.textContent = this.predictionEngine.getTotalTicks();
                 DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
 
-                // Log every 5 ticks
                 if (this.predictionEngine.getTotalTicks() % 5 === 0) {
                     this.logger.log(`✅ Tick #${this.predictionEngine.getTotalTicks()}: ${price} → digit ${digit}`, 'success');
                 }
@@ -1570,28 +1489,6 @@
             }
 
             _bindUI() {
-                // Digit buttons
-                DOM.digitSelector.querySelectorAll('.digit-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        if (this.predictionEngine.isWaiting && !this.predictionEngine.expired) {
-                            DOM.resultStatus.textContent = '⏳ Please wait for current prediction to complete...';
-                            DOM.resultStatus.className = 'result-status waiting';
-                            return;
-                        }
-
-                        DOM.digitSelector.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        this.selectedDigit = parseInt(btn.dataset.digit);
-                        this.predictionEngine.setSelectedDigit(this.selectedDigit);
-                        DOM.selectedDisplay.textContent = this.selectedDigit;
-                        DOM.resultStatus.textContent = '✅ Digit selected! Click PREDICT';
-                        DOM.resultStatus.className = 'result-status waiting';
-                        const conf = this.predictionEngine.getConfidence(this.selectedDigit);
-                        DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
-                        this.logger.log(`🎯 Selected digit: ${this.selectedDigit}`, 'info');
-                    });
-                });
-
                 // Predict button
                 DOM.predictBtn.addEventListener('click', () => {
                     if (this.predictionEngine.isWaiting && !this.predictionEngine.expired) {
@@ -1600,32 +1497,33 @@
                         return;
                     }
 
-                    if (this.selectedDigit === null) {
-                        DOM.resultStatus.textContent = '⚠️ Please select a digit first!';
-                        DOM.resultStatus.className = 'result-status wrong';
-                        this.logger.log('⚠️ No digit selected', 'error');
-                        return;
-                    }
-
-                    if (this.predictionEngine.getHistory().length < 10) {
-                        DOM.resultStatus.textContent = '⏳ Waiting for more data... (need 10 ticks)';
+                    if (this.predictionEngine.getHistory().length < 3) {
+                        DOM.resultStatus.textContent = '⏳ Waiting for more data... (need 3 ticks)';
                         DOM.resultStatus.className = 'result-status waiting';
                         this.logger.log('⏳ Not enough data yet', 'info');
                         return;
                     }
 
                     const pred = this.predictionEngine.predict();
-                    DOM.predictedDisplay.textContent = pred;
 
-                    const conf = this.predictionEngine.getConfidence(this.selectedDigit);
+                    if (pred === null) {
+                        DOM.resultStatus.textContent = '⏳ Not enough data yet...';
+                        DOM.resultStatus.className = 'result-status waiting';
+                        return;
+                    }
+
+                    DOM.predictedDisplay.textContent = pred;
+                    DOM.actualDisplay.textContent = '...';
+
+                    const conf = this.predictionEngine.getConfidence(pred);
                     DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
 
-                    DOM.resultStatus.textContent = `⏳ Waiting ${PREDICTION_WINDOW}s for ${this.selectedDigit}...`;
+                    DOM.resultStatus.textContent = `⏳ Waiting ${PREDICTION_WINDOW}s for result...`;
                     DOM.resultStatus.className = 'result-status waiting';
 
-                    this.logger.log(`🎯 PREDICTED: ${this.selectedDigit} (${Math.round(conf)}% confidence)`, 'info');
+                    this.logger.log(`🎯 PREDICTED: ${pred} (${Math.round(conf)}% confidence)`, 'info');
 
-                    this.predictionEngine.startPrediction(this.selectedDigit);
+                    this.predictionEngine.startPrediction(pred);
                     this.countdown.start();
                     DOM.predictBtn.disabled = true;
                 });
@@ -1642,17 +1540,14 @@
                     DOM.predictBtn.disabled = false;
 
                     const symbol = DOM.symbolSelect.value;
-                    this.selectedDigit = null;
-                    this.predictionEngine.setSelectedDigit(null);
-                    DOM.digitSelector.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('selected'));
-                    DOM.selectedDisplay.textContent = '-';
                     DOM.predictedDisplay.textContent = '-';
+                    DOM.actualDisplay.textContent = '-';
                     DOM.confidenceDisplay.textContent = '-';
                     DOM.priceInt.textContent = '--';
                     DOM.priceDec.textContent = '--';
                     DOM.tickCount.textContent = '0';
                     DOM.accDisplay.textContent = '0%';
-                    DOM.resultStatus.textContent = '⚡ Select a digit and click PREDICT';
+                    DOM.resultStatus.textContent = '⚡ Click PREDICT to start';
                     DOM.resultStatus.className = 'result-status waiting';
 
                     this.predictionEngine.history = [];

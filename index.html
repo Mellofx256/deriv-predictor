@@ -1244,7 +1244,7 @@
         }
 
         // ================================================================
-        // REST API FETCHER (No WebSocket - Works from Anywhere)
+        // FETCH MANAGER (REST API with CORS Proxy)
         // ================================================================
 
         class DerivFetcher {
@@ -1260,6 +1260,7 @@
                 this.failCount = 0;
                 this.maxFailures = 5;
                 this.lastTick = null;
+                this.proxyUrl = 'https://corsproxy.io/?';
             }
 
             start() {
@@ -1267,7 +1268,7 @@
                 this.isRunning = true;
                 this.isConnected = true;
                 this._setStatus('online', '✅ Connected');
-                this.onLog('Started fetching ticks via REST API', 'info');
+                this.onLog('Started fetching via REST API', 'info');
                 this._fetchTick();
                 this.timer = setInterval(() => this._fetchTick(), 2000);
             }
@@ -1284,14 +1285,13 @@
             }
 
             _fetchTick() {
-                // Use the correct endpoint format with app_id in URL
                 const url = `https://api.deriv.com/v3/ticks?ticks=${this.currentSymbol}&app_id=${this.appId}`;
+                const proxyUrl = this.proxyUrl + encodeURIComponent(url);
 
-                fetch(url, {
+                fetch(proxyUrl, {
                         method: 'GET',
                         headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
+                            'Accept': 'application/json'
                         }
                     })
                     .then(response => {
@@ -1380,7 +1380,7 @@
 
                 this.logger.log('🚀 Deriv Match Predictor initializing...', 'info');
 
-                // Start REST API Fetcher
+                // Start REST API Fetcher with CORS proxy
                 this.fetcher = new DerivFetcher(
                     APP_ID,
                     this._handleTick.bind(this),

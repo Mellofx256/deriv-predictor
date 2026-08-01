@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deriv Momentum Predictor</title>
+    <title>Deriv Digit Predictor</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
@@ -11,8 +11,8 @@
     <style>
         /* ============ THEME ============ */
         :root {
-            --bg-glass: rgba(10, 14, 26, 0.75);
-            --bg-glass-hover: rgba(10, 14, 26, 0.85);
+            --bg-glass: rgba(10, 14, 26, 0.78);
+            --bg-glass-hover: rgba(10, 14, 26, 0.88);
             --border-glass: rgba(255, 255, 255, 0.08);
             --shadow-glass: 0 8px 40px rgba(0, 0, 0, 0.6);
             --text-primary: #ffffff;
@@ -37,9 +37,6 @@
             --log-bg: rgba(0, 0, 0, 0.3);
             --log-text: rgba(255, 255, 255, 0.4);
             --result-bg: rgba(255, 255, 255, 0.04);
-            --momentum-up: #22d3ee;
-            --momentum-down: #e94560;
-            --momentum-neutral: #f59e0b;
         }
 
         * {
@@ -65,7 +62,7 @@
         }
 
         .container {
-            max-width: 460px;
+            max-width: 440px;
             width: 100%;
             background: var(--bg-glass);
             backdrop-filter: blur(24px);
@@ -280,90 +277,18 @@
             color: #22d3ee;
         }
 
-        .strategy-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 14px;
-            background: var(--bg-input);
-            border-radius: 10px;
-            margin: 10px 0;
-            font-size: 11px;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-glass);
-        }
-
-        .strategy-info .label {
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .strategy-info .value {
-            color: var(--text-primary);
-            font-weight: 700;
-        }
-
-        .strategy-info .value.up {
-            color: var(--momentum-up);
-        }
-        .strategy-info .value.down {
-            color: var(--momentum-down);
-        }
-        .strategy-info .value.neutral {
-            color: var(--momentum-neutral);
-        }
-
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            margin: 10px 0;
-        }
-
-        .loading-spinner.active {
-            display: block;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 10px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top: 4px solid #e94560;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .loading-timer {
-            color: #22d3ee;
-            font-size: 24px;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
         }
 
         .predict-btn {
-            padding: 20px 50px;
+            padding: 18px 50px;
             border: none;
             border-radius: 16px;
             background: var(--predict-btn-bg);
             color: var(--predict-btn-text);
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 800;
             font-family: 'Inter', sans-serif;
             cursor: pointer;
@@ -406,7 +331,7 @@
         }
 
         .predict-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
@@ -432,9 +357,47 @@
             }
         }
 
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 16px;
+            margin: 8px 0;
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 8px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #e94560;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .loading-timer {
+            color: #22d3ee;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
         .countdown-container {
-            margin: 14px 0 16px;
-            padding: 12px 16px;
+            margin: 12px 0 14px;
+            padding: 10px 14px;
             background: var(--result-bg);
             border-radius: 12px;
             border: 1px solid var(--border-glass);
@@ -453,7 +416,7 @@
             font-size: 11px;
             color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .countdown-label .time-left {
@@ -482,9 +445,9 @@
 
         .countdown-bar-track {
             width: 100%;
-            height: 8px;
+            height: 6px;
             background: var(--freq-bar-bg);
-            border-radius: 6px;
+            border-radius: 4px;
             overflow: hidden;
             position: relative;
         }
@@ -492,40 +455,38 @@
         .countdown-bar-fill {
             height: 100%;
             width: 100%;
-            border-radius: 6px;
+            border-radius: 4px;
             transition: width 0.3s ease, background 0.5s ease;
             background: linear-gradient(90deg, #22d3ee, #10b981);
         }
 
         .countdown-bar-fill.glow-green {
             background: linear-gradient(90deg, #10b981, #22d3ee);
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
         }
 
         .countdown-bar-fill.glow-yellow {
             background: linear-gradient(90deg, #f59e0b, #fbbf24);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
         }
 
         .countdown-bar-fill.glow-orange {
             background: linear-gradient(90deg, #f97316, #fb923c);
-            box-shadow: 0 0 25px rgba(249, 115, 22, 0.3);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.25);
         }
 
         .countdown-bar-fill.glow-red {
             background: linear-gradient(90deg, #dc2626, #e94560);
-            box-shadow: 0 0 30px rgba(233, 69, 96, 0.4);
-            animation: pulseBar 0.6s ease-in-out infinite alternate;
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.35);
+            animation: pulseBar 0.5s ease-in-out infinite alternate;
         }
 
         @keyframes pulseBar {
             0% {
                 opacity: 0.8;
-                box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
             }
             100% {
                 opacity: 1;
-                box-shadow: 0 0 40px rgba(233, 69, 96, 0.6);
             }
         }
 
@@ -533,8 +494,8 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
-            margin: 0 0 12px;
-            padding: 16px;
+            margin: 0 0 10px;
+            padding: 14px;
             background: var(--result-bg);
             border-radius: 14px;
             border: 1px solid var(--border-glass);
@@ -555,7 +516,7 @@
         }
 
         .result-item .value {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 800;
             margin-top: 2px;
             font-variant-numeric: tabular-nums;
@@ -564,18 +525,18 @@
 
         .result-item .value.predicted {
             color: #e94560;
-            text-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
-            font-size: 48px;
+            text-shadow: 0 0 25px rgba(233, 69, 96, 0.12);
+            font-size: 44px;
         }
 
         .result-item .value.confidence {
-            font-size: 24px;
+            font-size: 22px;
             color: #10b981;
-            text-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+            text-shadow: 0 0 25px rgba(16, 185, 129, 0.1);
         }
 
         .result-item .value.status-text {
-            font-size: 20px;
+            font-size: 18px;
             color: #f59e0b;
         }
 
@@ -583,7 +544,7 @@
             text-align: center;
             font-size: 12px;
             font-weight: 600;
-            padding: 8px;
+            padding: 6px;
             border-radius: 10px;
             margin-top: 2px;
             border: 1px solid transparent;
@@ -632,7 +593,7 @@
             background: var(--bg-glass);
             border-radius: 12px;
             padding: 10px 14px;
-            margin: 12px 0;
+            margin: 10px 0;
             border: 1px solid var(--border-glass);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -644,23 +605,23 @@
             letter-spacing: 1px;
             color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .history-digits {
             display: flex;
-            gap: 5px;
+            gap: 4px;
             flex-wrap: wrap;
             justify-content: center;
         }
 
         .history-digit {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             border-radius: 6px;
             background: var(--history-digit-bg);
@@ -680,7 +641,7 @@
         }
 
         .frequency-section {
-            margin: 12px 0 14px;
+            margin: 10px 0 12px;
         }
 
         .frequency-title {
@@ -689,7 +650,7 @@
             letter-spacing: 1px;
             color: var(--text-secondary);
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .frequency-grid {
@@ -702,14 +663,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
         }
 
         .freq-bar {
             width: 100%;
-            height: 30px;
+            height: 28px;
             background: var(--freq-bar-bg);
-            border-radius: 4px;
+            border-radius: 3px;
             position: relative;
             overflow: hidden;
         }
@@ -719,7 +680,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            border-radius: 4px;
+            border-radius: 3px;
             transition: height 0.5s ease;
             background: var(--freq-fill);
         }
@@ -735,11 +696,11 @@
         }
 
         .log-section {
-            margin-top: 12px;
-            padding: 8px 12px;
+            margin-top: 10px;
+            padding: 6px 10px;
             background: var(--log-bg);
             border-radius: 10px;
-            max-height: 55px;
+            max-height: 50px;
             overflow-y: auto;
             font-size: 10px;
             font-family: 'Inter', monospace;
@@ -758,7 +719,7 @@
         }
 
         .log-entry {
-            padding: 2px 0;
+            padding: 1px 0;
             color: var(--log-text);
         }
         .log-entry.success {
@@ -779,34 +740,28 @@
                 font-size: 30px;
             }
             .predict-btn {
-                padding: 16px 30px;
-                font-size: 20px;
+                padding: 14px 30px;
+                font-size: 18px;
             }
             .result-item .value.predicted {
-                font-size: 36px;
+                font-size: 34px;
             }
             .result-item .value {
-                font-size: 26px;
+                font-size: 24px;
             }
             .result-item .value.confidence {
-                font-size: 20px;
+                font-size: 18px;
             }
             .freq-bar {
-                height: 24px;
+                height: 22px;
             }
             .result-section {
-                padding: 12px;
+                padding: 10px;
                 gap: 6px;
             }
             select {
                 font-size: 12px;
                 padding: 8px 10px;
-            }
-            .strategy-info {
-                font-size: 10px;
-                padding: 6px 10px;
-                flex-wrap: wrap;
-                gap: 4px;
             }
         }
     </style>
@@ -817,8 +772,8 @@
 
         <div class="header">
             <div class="logo">
-                <div class="logo-icon">📈</div>
-                <div class="logo-text">Deriv<span>Momentum</span></div>
+                <div class="logo-icon">🎯</div>
+                <div class="logo-text">Deriv<span>Predict</span></div>
             </div>
             <div class="badge">Live</div>
         </div>
@@ -868,26 +823,16 @@
             </div>
         </div>
 
-        <!-- Strategy Info -->
-        <div class="strategy-info">
-            <span class="label">📊 Momentum</span>
-            <span class="value neutral" id="momentumDisplay">--</span>
-            <span class="label">📈 Streak</span>
-            <span class="value neutral" id="streakDisplay">0</span>
-            <span class="label">🎯 Method</span>
-            <span class="value neutral" id="methodDisplay">--</span>
-        </div>
-
         <div class="loading-spinner" id="loadingSpinner">
             <div class="spinner"></div>
-            <div class="loading-text">📊 Analyzing market momentum...</div>
+            <div class="loading-text">🔮 Analyzing market patterns...</div>
             <div class="loading-timer" id="loadingTimer">--</div>
         </div>
 
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
-                <span class="sub">Momentum + Streak Analysis</span>
+                <span class="sub">Get the next digit prediction</span>
             </button>
         </div>
 
@@ -903,7 +848,7 @@
 
         <div class="result-section">
             <div class="result-item">
-                <div class="label">Predicted Digit</div>
+                <div class="label">Predicted</div>
                 <div class="value predicted" id="predictedDisplay">-</div>
             </div>
             <div class="result-item">
@@ -916,7 +861,7 @@
             </div>
         </div>
 
-        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to analyze momentum</div>
+        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to get a digit prediction</div>
 
         <div class="history-section">
             <div class="history-label">📜 Recent Digits</div>
@@ -970,9 +915,6 @@
             timeLeft: document.getElementById('timeLeft'),
             loadingSpinner: document.getElementById('loadingSpinner'),
             loadingTimer: document.getElementById('loadingTimer'),
-            momentumDisplay: document.getElementById('momentumDisplay'),
-            streakDisplay: document.getElementById('streakDisplay'),
-            methodDisplay: document.getElementById('methodDisplay'),
         };
 
         // ================================================================
@@ -1197,10 +1139,10 @@
         }
 
         // ================================================================
-        // MOMENTUM PREDICTION ENGINE
+        // PREDICTION ENGINE
         // ================================================================
 
-        class MomentumEngine {
+        class PredictionEngine {
             constructor() {
                 this.history = [];
                 this.totalTicks = 0;
@@ -1208,9 +1150,7 @@
                 this.currentPrediction = null;
                 this.isPredictionActive = false;
                 this.predictionExpired = false;
-                this.momentum = 0;
-                this.streak = 0;
-                this.lastMethod = '--';
+                this.lastPrediction = null;
             }
 
             addTick(digit) {
@@ -1218,160 +1158,54 @@
                 if (this.history.length > 100) this.history.shift();
                 this.totalTicks++;
 
-                // Calculate momentum and streak
-                this._calculateMetrics();
+                // Check if we have a pending prediction
+                if (this.isPredictionActive && !this.predictionExpired && this.currentPrediction !== null) {
+                    const isMatch = digit === this.currentPrediction;
+                    if (isMatch) {
+                        this.correctPredictions++;
+                        this.isPredictionActive = false;
+                        return { result: 'correct', predicted: this.currentPrediction, actual: digit };
+                    } else {
+                        this.isPredictionActive = false;
+                        return { result: 'wrong', predicted: this.currentPrediction, actual: digit };
+                    }
+                }
                 return null;
             }
 
-            _calculateMetrics() {
-                const len = this.history.length;
-                if (len < 2) {
-                    this.momentum = 0;
-                    this.streak = 0;
-                    return;
-                }
-
-                // Calculate momentum: average of last 5 changes
-                const changes = [];
-                for (let i = Math.max(0, len - 6); i < len - 1; i++) {
-                    changes.push(this.history[i + 1] - this.history[i]);
-                }
-
-                if (changes.length > 0) {
-                    this.momentum = changes.reduce((a, b) => a + b, 0) / changes.length;
-                }
-
-                // Calculate streak: consecutive same direction
-                this.streak = 0;
-                if (len >= 2) {
-                    const direction = this.history[len - 1] - this.history[len - 2];
-                    if (direction !== 0) {
-                        const sign = Math.sign(direction);
-                        for (let i = len - 2; i >= 1; i--) {
-                            const currentDir = this.history[i] - this.history[i - 1];
-                            if (Math.sign(currentDir) === sign) {
-                                this.streak++;
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            getMomentumDirection() {
-                if (Math.abs(this.momentum) < 0.3) return 'neutral';
-                return this.momentum > 0 ? 'up' : 'down';
-            }
-
-            // Main prediction method - combines multiple signals
             generatePrediction() {
                 const len = this.history.length;
-                let prediction = null;
-                let confidence = 30;
-                let method = 'Random';
 
-                if (len >= 3) {
-                    // Strategy 1: X2X Pattern Detection
-                    const d1 = this.history[len - 3];
-                    const d2 = this.history[len - 2];
-                    const d3 = this.history[len - 1];
-
-                    if (d1 === d3 && d1 !== d2) {
-                        // X2X pattern found - predict the middle digit + momentum adjustment
-                        let pred = d2;
-                        // Adjust based on momentum
-                        if (this.momentum > 1) {
-                            pred = Math.min(9, pred + 1);
-                        } else if (this.momentum < -1) {
-                            pred = Math.max(0, pred - 1);
-                        }
-                        prediction = pred;
-                        confidence = 65 + Math.random() * 15;
-                        method = 'X2X Pattern';
-                    }
-
-                    // Strategy 2: Streak Continuation
-                    if (this.streak >= 2 && prediction === null) {
-                        // If we have a strong streak, predict the streak direction
-                        const last = this.history[len - 1];
-                        const prev = this.history[len - 2];
-                        const direction = last - prev;
-                        if (direction > 0) {
-                            prediction = Math.min(9, last + 1);
-                        } else if (direction < 0) {
-                            prediction = Math.max(0, last - 1);
-                        } else {
-                            // If no movement, predict the same digit
-                            prediction = last;
-                        }
-                        confidence = 55 + Math.random() * 20;
-                        method = 'Streak Continuation';
-                    }
-
-                    // Strategy 3: Momentum Reversal
-                    if (this.momentum > 1.5 && prediction === null) {
-                        // Strong upward momentum - predict a slight pullback
-                        const last = this.history[len - 1];
-                        prediction = Math.max(0, last - 1);
-                        confidence = 50 + Math.random() * 20;
-                        method = 'Momentum Reversal';
-                    }
-
-                    if (this.momentum < -1.5 && prediction === null) {
-                        // Strong downward momentum - predict a slight bounce
-                        const last = this.history[len - 1];
-                        prediction = Math.min(9, last + 1);
-                        confidence = 50 + Math.random() * 20;
-                        method = 'Momentum Reversal';
-                    }
-                }
-
-                // Strategy 4: Frequency Analysis (fallback)
-                if (prediction === null && this.history.length > 0) {
+                // If we have history, use frequency analysis
+                if (len > 0) {
                     const freq = {};
                     this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
+
                     let maxFreq = 0,
                         pred = 0;
                     for (const [digit, count] of Object.entries(freq)) {
                         if (count > maxFreq) { maxFreq = count;
                             pred = parseInt(digit); }
                     }
-                    prediction = pred;
-                    confidence = 35 + Math.random() * 25;
-                    method = 'Frequency Analysis';
+
+                    // Calculate confidence based on frequency dominance
+                    const total = this.history.length;
+                    const pct = (maxFreq / total) * 100;
+                    let confidence = 30 + (pct - 10) * 2;
+                    confidence = Math.max(10, Math.min(92, confidence));
+
+                    return { prediction: pred, confidence: confidence };
                 }
 
-                // Strategy 5: Random (absolute fallback)
-                if (prediction === null) {
-                    prediction = Math.floor(Math.random() * 10);
-                    confidence = 20 + Math.random() * 20;
-                    method = 'Random';
-                }
-
-                this.lastMethod = method;
-
-                // Update UI with momentum info
-                const dir = this.getMomentumDirection();
-                const emoji = dir === 'up' ? '📈' : dir === 'down' ? '📉' : '➡️';
-                const color = dir === 'up' ? 'up' : dir === 'down' ? 'down' : 'neutral';
-
-                return {
-                    prediction: prediction,
-                    confidence: Math.min(95, confidence),
-                    method: method,
-                    momentum: this.momentum,
-                    momentumDirection: dir,
-                    momentumEmoji: emoji,
-                    momentumColor: color,
-                    streak: this.streak
-                };
+                // Fallback: random prediction
+                return { prediction: Math.floor(Math.random() * 10), confidence: 25 + Math.random() * 20 };
             }
 
             startPrediction(digit) {
                 this.currentPrediction = digit;
                 this.isPredictionActive = true;
                 this.predictionExpired = false;
+                this.lastPrediction = digit;
             }
 
             expirePrediction() {
@@ -1408,14 +1242,6 @@
 
             isExpired() {
                 return this.predictionExpired;
-            }
-
-            getMetrics() {
-                return {
-                    momentum: this.momentum,
-                    streak: this.streak,
-                    method: this.lastMethod
-                };
             }
         }
 
@@ -1599,7 +1425,7 @@
                 this.logger = new Logger(DOM.logContainer);
                 this.historyManager = new HistoryManager(DOM.historyContainer);
                 this.frequencyManager = new FrequencyManager(DOM.freqGrid);
-                this.predictionEngine = new MomentumEngine();
+                this.predictionEngine = new PredictionEngine();
                 this.countdown = new CountdownManager(
                     DOM.countdownContainer,
                     DOM.countdownFill,
@@ -1620,8 +1446,7 @@
                 if (this.initialized) return;
                 this.initialized = true;
 
-                this.logger.log('🚀 Deriv Momentum Predictor initializing...', 'info');
-                this.logger.log('📊 Strategy: Momentum + Streak + X2X Pattern', 'info');
+                this.logger.log('🚀 Deriv Predictor initializing...', 'info');
 
                 this.socket = new DerivSocket(
                     APP_ID,
@@ -1642,7 +1467,7 @@
                     this.logger.log('⏰ Prediction window expired!', 'error');
                     setTimeout(() => {
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Click PREDICT to analyze momentum';
+                        DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
                         DOM.resultStatus.className = 'result-status waiting';
                     }, 3000);
                 });
@@ -1661,49 +1486,61 @@
                 this.historyManager.add(parseInt(digit));
                 this.frequencyManager.update(this.historyManager.getHistory());
 
-                // Update prediction engine with new tick
-                this.predictionEngine.addTick(parseInt(digit));
+                // Check if prediction matches
+                const result = this.predictionEngine.addTick(parseInt(digit));
 
-                // Update momentum display
-                const metrics = this.predictionEngine.getMetrics();
-                const dir = this.predictionEngine.getMomentumDirection();
-                const emoji = dir === 'up' ? '📈' : dir === 'down' ? '📉' : '➡️';
-                const color = dir === 'up' ? 'up' : dir === 'down' ? 'down' : 'neutral';
-                DOM.momentumDisplay.textContent = `${emoji} ${metrics.momentum.toFixed(1)}`;
-                DOM.momentumDisplay.className = `value ${color}`;
-                DOM.streakDisplay.textContent = metrics.streak;
-                DOM.streakDisplay.className = `value ${metrics.streak > 2 ? 'up' : 'neutral'}`;
-                DOM.methodDisplay.textContent = metrics.method;
-                DOM.methodDisplay.className = 'value neutral';
+                if (result) {
+                    this.countdown.stop();
+                    DOM.actualDisplay = document.getElementById('actualDisplay');
+                    if (!DOM.actualDisplay) {
+                        // Create actual display if it doesn't exist
+                        const resultSection = document.querySelector('.result-section');
+                        const items = resultSection.querySelectorAll('.result-item');
+                        if (items.length === 3) {
+                            const newItem = document.createElement('div');
+                            newItem.className = 'result-item';
+                            newItem.innerHTML = `
+                                <div class="label">Actual</div>
+                                <div class="value" id="actualDisplay" style="color:#22d3ee;font-size:30px;font-weight:800;">-</div>
+                            `;
+                            resultSection.appendChild(newItem);
+                            DOM.actualDisplay = document.getElementById('actualDisplay');
+                            // Adjust grid
+                            resultSection.style.gridTemplateColumns = '1fr 1fr 1fr 1fr';
+                        }
+                    }
+                    if (DOM.actualDisplay) DOM.actualDisplay.textContent = result.actual;
 
-                // Check if prediction matches actual digit
-                if (this.predictionEngine.isActive() && !this.predictionEngine.isExpired()) {
-                    const predicted = this.predictionEngine.getCurrentPrediction();
-                    const actual = parseInt(digit);
-                    if (predicted === actual) {
-                        this.predictionEngine.correctPredictions++;
-                        this.logger.log(`✅ CORRECT! Predicted ${predicted} → Actual ${actual}`, 'success');
+                    if (result.result === 'correct') {
                         DOM.statusDisplay.textContent = '✅ Correct!';
                         DOM.statusDisplay.style.color = '#22d3ee';
-                        DOM.resultStatus.textContent = `✅ CORRECT! Digit ${predicted} was right!`;
+                        DOM.resultStatus.textContent = `✅ CORRECT! Digit ${result.predicted} was right!`;
                         DOM.resultStatus.className = 'result-status correct';
-                        this.countdown.stop();
-                        DOM.predictBtn.disabled = false;
-                        this.predictionEngine.resetPrediction();
+                        DOM.countdownFill.className = 'countdown-bar-fill glow-green';
+                        DOM.timeLeft.textContent = '✅ Hit!';
+                        this.logger.log(`✅ Correct! Predicted ${result.predicted} → Actual ${result.actual}`, 'success');
                     } else {
-                        this.logger.log(`❌ Predicted ${predicted} → Actual ${actual}`, 'error');
                         DOM.statusDisplay.textContent = '❌ Missed';
                         DOM.statusDisplay.style.color = '#e94560';
-                        DOM.resultStatus.textContent = `❌ Missed! Was ${actual}, not ${predicted}`;
+                        DOM.resultStatus.textContent = `❌ Missed! Was ${result.actual}, not ${result.predicted}`;
                         DOM.resultStatus.className = 'result-status wrong';
-                        this.countdown.stop();
-                        DOM.predictBtn.disabled = false;
-                        this.predictionEngine.resetPrediction();
+                        DOM.countdownFill.className = 'countdown-bar-fill glow-red';
+                        DOM.timeLeft.textContent = '❌ Miss!';
+                        this.logger.log(`❌ Wrong! Predicted ${result.predicted} → Actual ${result.actual}`, 'error');
                     }
-                    DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
+
+                    DOM.predictBtn.disabled = false;
+                    this.predictionEngine.resetPrediction();
+
+                    setTimeout(() => {
+                        this.countdown.stop();
+                        DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
+                        DOM.resultStatus.className = 'result-status waiting';
+                    }, 3000);
                 }
 
                 DOM.tickCount.textContent = this.predictionEngine.getTotalTicks();
+                DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
 
                 if (this.predictionEngine.getTotalTicks() % 5 === 0) {
                     this.logger.log(`✅ Tick #${this.predictionEngine.getTotalTicks()}: ${price} → digit ${digit}`, 'success');
@@ -1719,12 +1556,12 @@
                 this.isLoading = true;
                 DOM.loadingSpinner.classList.add('active');
                 DOM.predictBtn.disabled = true;
-                DOM.resultStatus.textContent = '⏳ Analyzing momentum...';
+                DOM.resultStatus.textContent = '⏳ Analyzing...';
                 DOM.resultStatus.className = 'result-status loading';
-                DOM.statusDisplay.textContent = '⏳ Analyzing';
+                DOM.statusDisplay.textContent = '⏳ Loading';
                 DOM.statusDisplay.style.color = '#f59e0b';
 
-                const waitTime = 5000 + Math.random() * 10000;
+                const waitTime = 3000 + Math.random() * 8000;
                 const startTime = Date.now();
 
                 this.loadingInterval = setInterval(() => {
@@ -1733,7 +1570,7 @@
                     DOM.loadingTimer.textContent = `${Math.ceil(remaining)}s`;
                 }, 100);
 
-                this.logger.log(`⏳ Analyzing momentum... (${Math.round(waitTime/1000)}s)`, 'info');
+                this.logger.log(`⏳ Analyzing market patterns... (${Math.round(waitTime/1000)}s)`, 'info');
 
                 setTimeout(() => {
                     this._showPrediction();
@@ -1749,23 +1586,21 @@
                 const result = this.predictionEngine.generatePrediction();
                 const pred = result.prediction;
                 const conf = result.confidence;
-                const method = result.method;
 
                 DOM.predictedDisplay.textContent = pred;
                 DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
                 DOM.statusDisplay.textContent = '⏳ Active';
                 DOM.statusDisplay.style.color = '#22d3ee';
-                DOM.methodDisplay.textContent = method;
-                DOM.methodDisplay.className = 'value neutral';
-
                 DOM.resultStatus.textContent = `🎯 ${pred} predicted! Valid for ${PREDICTION_WINDOW}s`;
                 DOM.resultStatus.className = 'result-status active';
+
+                // Reset actual display if exists
+                if (DOM.actualDisplay) DOM.actualDisplay.textContent = '...';
 
                 this.predictionEngine.startPrediction(pred);
                 this.countdown.start();
 
                 this.logger.log(`🎯 PREDICTED: ${pred} (${Math.round(conf)}% confidence)`, 'info');
-                this.logger.log(`📊 Method: ${method} | Momentum: ${result.momentum.toFixed(1)} | Streak: ${result.streak}`, 'info');
                 this.logger.log(`⏳ You have ${PREDICTION_WINDOW}s to trade this digit`, 'info');
             }
 
@@ -1792,10 +1627,12 @@
 
                     DOM.predictedDisplay.textContent = '-';
                     DOM.confidenceDisplay.textContent = '-';
-                    DOM.statusDisplay.textContent = '⏳ Analyzing';
+                    DOM.statusDisplay.textContent = '⏳ Loading';
                     DOM.statusDisplay.style.color = '#f59e0b';
-                    DOM.resultStatus.textContent = '⏳ Analyzing momentum...';
+                    DOM.resultStatus.textContent = '⏳ Analyzing market patterns...';
                     DOM.resultStatus.className = 'result-status loading';
+
+                    if (DOM.actualDisplay) DOM.actualDisplay.textContent = '-';
 
                     this._startLoading();
                 });
@@ -1825,14 +1662,9 @@
                     DOM.priceDec.textContent = '--';
                     DOM.tickCount.textContent = '0';
                     DOM.accDisplay.textContent = '0%';
-                    DOM.resultStatus.textContent = '⚡ Click PREDICT to analyze momentum';
+                    DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
                     DOM.resultStatus.className = 'result-status waiting';
-                    DOM.momentumDisplay.textContent = '--';
-                    DOM.momentumDisplay.className = 'value neutral';
-                    DOM.streakDisplay.textContent = '0';
-                    DOM.streakDisplay.className = 'value neutral';
-                    DOM.methodDisplay.textContent = '--';
-                    DOM.methodDisplay.className = 'value neutral';
+                    if (DOM.actualDisplay) DOM.actualDisplay.textContent = '-';
 
                     this.predictionEngine.history = [];
                     this.predictionEngine.totalTicks = 0;

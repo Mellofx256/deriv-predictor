@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deriv Match Predictor</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ============ THEME COLORS ============ */
+        :root {
+            --color-bg-dark: #0a0e1a;
+            --color-purple: #6c3cb0;
+            --color-pink: #e94560;
+            --color-blue: #3b82f6;
+            --color-cyan: #22d3ee;
+            --color-gold: #f59e0b;
+            --color-green: #10b981;
+            --color-white: #ffffff;
+            --color-gray-light: rgba(255, 255, 255, 0.85);
+            --color-gray-mid: rgba(255, 255, 255, 0.6);
+            --color-gray-dark: rgba(255, 255, 255, 0.25);
+
+            --bg-glass: rgba(10, 14, 26, 0.72);
+            --bg-glass-hover: rgba(10, 14, 26, 0.82);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --shadow-glass: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.35);
+
+            --predict-btn-bg: linear-gradient(135deg, #6c3cb0, #e94560);
+            --predict-btn-text: #ffffff;
+
+            --status-bg: rgba(255, 255, 255, 0.06);
+            --freq-bar-bg: rgba(255, 255, 255, 0.06);
+            --freq-fill: linear-gradient(180deg, #e94560, #6c3cb0);
+            --freq-fill-high: linear-gradient(180deg, #22d3ee, #3b82f6);
+
+            --history-digit-bg: rgba(255, 255, 255, 0.06);
+            --history-digit-color: rgba(255, 255, 255, 0.5);
+            --history-recent-bg: rgba(34, 211, 238, 0.12);
+            --history-recent-color: #22d3ee;
+            --history-highlight-bg: rgba(233, 69, 96, 0.15);
+            --history-highlight-color: #e94560;
+
+            --bg-input: rgba(255, 255, 255, 0.06);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --select-color: #ffffff;
+            --select-bg: rgba(255, 255, 255, 0.06);
+
+            --log-bg: rgba(0, 0, 0, 0.3);
+            --log-text: rgba(255, 255, 255, 0.4);
+
+            --result-bg: rgba(255, 255, 255, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            background-image: url('https://i.imgur.com/XpxjmIW.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 460px;
+            width: 100%;
+            background: var(--bg-glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 24px;
+            padding: 24px 20px;
+            box-shadow: var(--shadow-glass);
+            position: relative;
+            z-index: 1;
+            border: 1px solid var(--border-glass);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            background: var(--bg-glass-hover);
+            box-shadow: 0 12px 56px rgba(0, 0, 0, 0.7);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #6c3cb0, #e94560);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: #fff;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            background: linear-gradient(135deg, #e94560, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: rgba(34, 211, 238, 0.12);
+            color: #22d3ee;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 211, 238, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            background: var(--status-bg);
+            border-radius: 10px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .status-dot {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        .dot.online {
+            background: #22d3ee;
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+        }
+        .dot.offline {
+            background: #e94560;
+            box-shadow: 0 0 12px rgba(233, 69, 96, 0.4);
+        }
+        .dot.connecting {
+            background: #f59e0b;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(0.85);
+            }
+        }
+
+        .stats-mini {
+            display: flex;
+            gap: 12px;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .stats-mini span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .selector-wrapper {
+            margin-bottom: 12px;
+        }
+
+        .selector-wrapper label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--select-bg);
+            color: var(--select-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            max-height: 300px;
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 4px 8px;
+        }
+
+        select optgroup {
+            background: #0a0e1a;
+            color: #22d3ee;
+            font-weight: 700;
+            padding: 4px 0;
+        }
+
+        select:hover {
+            border-color: rgba(108, 60, 176, 0.4);
+        }
+        select:focus {
+            outline: none;
+            border-color: #6c3cb0;
+            box-shadow: 0 0 20px rgba(108, 60, 176, 0.15);
+        }
+
+        .price-section {
+            text-align: center;
+            padding: 10px 0 8px;
+        }
+
+        .price-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .price-value {
+            font-size: 38px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .price-value .decimal {
+            color: #22d3ee;
+        }
+
+        .digit-selector {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+            margin: 14px 0 16px;
+        }
+
+        .digit-btn {
+            padding: 10px 0;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .digit-btn:hover {
+            border-color: rgba(108, 60, 176, 0.4);
+            transform: scale(1.05);
+            background: rgba(108, 60, 176, 0.12);
+            color: #ffffff;
+        }
+
+        .digit-btn.selected {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.15);
+            color: #e94560;
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.08);
+        }
+
+        /* ============ PREDICT BUTTON ============ */
+        .predict-center {
+            text-align: center;
+            margin: 16px 0 18px;
+        }
+
+        .predict-btn {
+            padding: 16px 50px;
+            border: none;
+            border-radius: 14px;
+            background: var(--predict-btn-bg);
+            color: var(--predict-btn-text);
+            font-size: 20px;
+            font-weight: 800;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 30px rgba(108, 60, 176, 0.25);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .predict-btn::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #6c3cb0, #e94560, #22d3ee, #6c3cb0);
+            background-size: 300% 300%;
+            border-radius: 16px;
+            z-index: -1;
+            animation: btnGlow 4s ease-in-out infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .predict-btn:hover::before {
+            opacity: 1;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 40px rgba(108, 60, 176, 0.35);
+        }
+
+        .predict-btn:active {
+            transform: scale(0.97);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .predict-btn .sub {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            opacity: 0.7;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-top: 2px;
+        }
+
+        @keyframes btnGlow {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ============ COUNTDOWN BAR ============ */
+        .countdown-container {
+            margin: 14px 0 16px;
+            padding: 12px 16px;
+            background: var(--result-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .countdown-container.active {
+            display: block;
+        }
+
+        .countdown-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .countdown-label .time-left {
+            color: #22d3ee;
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+
+        .countdown-label .time-left.warning {
+            color: #f59e0b;
+        }
+
+        .countdown-label .time-left.danger {
+            color: #e94560;
+            animation: pulseText 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseText {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.4;
+            }
+        }
+
+        .countdown-bar-track {
+            width: 100%;
+            height: 8px;
+            background: var(--freq-bar-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .countdown-bar-fill {
+            height: 100%;
+            width: 100%;
+            border-radius: 6px;
+            transition: width 0.3s ease, background 0.5s ease;
+            background: linear-gradient(90deg, #22d3ee, #10b981);
+        }
+
+        .countdown-bar-fill.glow-green {
+            background: linear-gradient(90deg, #10b981, #22d3ee);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .countdown-bar-fill.glow-yellow {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+        }
+
+        .countdown-bar-fill.glow-orange {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.3);
+        }
+
+        .countdown-bar-fill.glow-red {
+            background: linear-gradient(90deg, #dc2626, #e94560);
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.4);
+            animation: pulseBar 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseBar {
+            0% {
+                opacity: 0.8;
+                box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+            }
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 40px rgba(233, 69, 96, 0.6);
+            }
+        }
+
+        /* ============ RESULT SECTION ============ */
+        .result-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 0 0 12px;
+            padding: 16px;
+            background: var(--result-bg);
+            border-radius: 14px;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .result-item {
+            text-align: center;
+        }
+
+        .result-item .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .result-item .value {
+            font-size: 32px;
+            font-weight: 800;
+            margin-top: 2px;
+            font-variant-numeric: tabular-nums;
+            transition: all 0.3s ease;
+        }
+
+        .result-item .value.predicted {
+            color: #e94560;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
+        }
+
+        .result-item .value.confidence {
+            font-size: 24px;
+            color: #22d3ee;
+            text-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
+        }
+
+        .result-status {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px;
+            border-radius: 10px;
+            margin-top: 2px;
+            border: 1px solid transparent;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .result-status.correct {
+            color: #22d3ee;
+            background: rgba(34, 211, 238, 0.08);
+            border-color: rgba(34, 211, 238, 0.15);
+        }
+
+        .result-status.wrong {
+            color: #e94560;
+            background: rgba(233, 69, 96, 0.08);
+            border-color: rgba(233, 69, 96, 0.15);
+        }
+
+        .result-status.waiting {
+            color: var(--text-secondary);
+            background: var(--bg-input);
+            border-color: var(--border-color);
+        }
+
+        .result-status.expired {
+            color: #e94560;
+            background: rgba(233, 69, 96, 0.08);
+            border-color: rgba(233, 69, 96, 0.2);
+            animation: pulseText 0.5s ease-in-out infinite alternate;
+        }
+
+        .history-section {
+            background: var(--bg-glass);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin: 12px 0;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .history-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .history-digits {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .history-digit {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            background: var(--history-digit-bg);
+            color: var(--history-digit-color);
+            transition: all 0.3s ease;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .history-digit.recent {
+            background: var(--history-recent-bg);
+            color: var(--history-recent-color);
+        }
+
+        .history-digit.highlight {
+            background: var(--history-highlight-bg);
+            color: var(--history-highlight-color);
+        }
+
+        .frequency-section {
+            margin: 12px 0 14px;
+        }
+
+        .frequency-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .frequency-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+        }
+
+        .freq-bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .freq-bar {
+            width: 100%;
+            height: 30px;
+            background: var(--freq-bar-bg);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .freq-bar .fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-radius: 4px;
+            transition: height 0.5s ease;
+            background: var(--freq-fill);
+        }
+
+        .freq-bar .fill.high {
+            background: var(--freq-fill-high);
+        }
+
+        .freq-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .log-section {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: var(--log-bg);
+            border-radius: 10px;
+            max-height: 55px;
+            overflow-y: auto;
+            font-size: 10px;
+            font-family: 'Inter', monospace;
+            color: var(--log-text);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .log-section::-webkit-scrollbar {
+            width: 3px;
+        }
+        .log-section::-webkit-scrollbar-thumb {
+            background: rgba(108, 60, 176, 0.3);
+            border-radius: 10px;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+            color: var(--log-text);
+        }
+        .log-entry.success {
+            color: #22d3ee;
+        }
+        .log-entry.error {
+            color: #e94560;
+        }
+        .log-entry.info {
+            color: #f59e0b;
+        }
+
+        @media (max-width: 420px) {
+            .container {
+                padding: 16px 12px;
+            }
+            .price-value {
+                font-size: 30px;
+            }
+            .digit-selector {
+                gap: 4px;
+            }
+            .digit-btn {
+                font-size: 16px;
+                padding: 8px 0;
+            }
+            .predict-btn {
+                padding: 14px 30px;
+                font-size: 17px;
+            }
+            .result-item .value {
+                font-size: 26px;
+            }
+            .result-item .value.confidence {
+                font-size: 20px;
+            }
+            .freq-bar {
+                height: 24px;
+            }
+            .result-section {
+                padding: 12px;
+                gap: 6px;
+            }
+            select {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🎯</div>
+                <div class="logo-text">Deriv<span>Match</span></div>
+            </div>
+            <div class="badge">Live</div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-dot">
+                <span class="dot online" id="statusDot"></span>
+                <span id="statusText">Connected</span>
+            </div>
+            <div class="stats-mini">
+                <span>⏱ <span id="tickCount">0</span></span>
+                <span>🎯 <span id="accDisplay">0%</span></span>
+            </div>
+        </div>
+
+        <div class="selector-wrapper">
+            <label>📊 Select Index</label>
+            <select id="symbol">
+                <optgroup label="⚡ 1-Second Volatility Indices">
+                    <option value="1HZ10V">Volatility 10 (1s) – 10%</option>
+                    <option value="1HZ15V">Volatility 15 (1s) – 15%</option>
+                    <option value="1HZ25V">Volatility 25 (1s) – 25%</option>
+                    <option value="1HZ30V">Volatility 30 (1s) – 30%</option>
+                    <option value="1HZ50V">Volatility 50 (1s) – 50%</option>
+                    <option value="1HZ75V">Volatility 75 (1s) – 75%</option>
+                    <option value="1HZ90V">Volatility 90 (1s) – 90%</option>
+                    <option value="1HZ100V" selected>Volatility 100 (1s) – 100%</option>
+                    <option value="1HZ150V">Volatility 150 (1s) – 150%</option>
+                    <option value="1HZ200V">Volatility 200 (1s) – 200%</option>
+                    <option value="1HZ250V">Volatility 250 (1s) – 250%</option>
+                    <option value="1HZ300V">Volatility 300 (1s) – 300%</option>
+                </optgroup>
+                <optgroup label="📊 Standard Volatility (2s)">
+                    <option value="R_10">Volatility 10 – 10%</option>
+                    <option value="R_25">Volatility 25 – 25%</option>
+                    <option value="R_50">Volatility 50 – 50%</option>
+                    <option value="R_75">Volatility 75 – 75%</option>
+                    <option value="R_100">Volatility 100 – 100%</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="price-section">
+            <div class="price-label">Current Price</div>
+            <div class="price-value" id="priceDisplay">
+                <span id="priceInt">--</span><span class="decimal" id="priceDec">--</span>
+            </div>
+        </div>
+
+        <div class="digit-selector" id="digitSelector">
+            <button class="digit-btn" data-digit="0">0</button>
+            <button class="digit-btn" data-digit="1">1</button>
+            <button class="digit-btn" data-digit="2">2</button>
+            <button class="digit-btn" data-digit="3">3</button>
+            <button class="digit-btn" data-digit="4">4</button>
+            <button class="digit-btn" data-digit="5">5</button>
+            <button class="digit-btn" data-digit="6">6</button>
+            <button class="digit-btn" data-digit="7">7</button>
+            <button class="digit-btn" data-digit="8">8</button>
+            <button class="digit-btn" data-digit="9">9</button>
+        </div>
+
+        <!-- PREDICT BUTTON -->
+        <div class="predict-center">
+            <button class="predict-btn" id="predictBtn">
+                🎯 PREDICT
+                <span class="sub">15-second prediction window</span>
+            </button>
+        </div>
+
+        <!-- COUNTDOWN BAR -->
+        <div class="countdown-container" id="countdownContainer">
+            <div class="countdown-label">
+                <span>⏳ Prediction Window</span>
+                <span class="time-left" id="timeLeft">15s</span>
+            </div>
+            <div class="countdown-bar-track">
+                <div class="countdown-bar-fill glow-green" id="countdownFill"></div>
+            </div>
+        </div>
+
+        <!-- RESULT SECTION -->
+        <div class="result-section">
+            <div class="result-item">
+                <div class="label">Selected</div>
+                <div class="value" id="selectedDisplay">-</div>
+            </div>
+            <div class="result-item">
+                <div class="label">Predicted</div>
+                <div class="value predicted" id="predictedDisplay">-</div>
+            </div>
+            <div class="result-item">
+                <div class="label">Confidence</div>
+                <div class="value confidence" id="confidenceDisplay">-</div>
+            </div>
+        </div>
+
+        <div class="result-status waiting" id="resultStatus">⚡ Select a digit and click PREDICT</div>
+
+        <div class="history-section">
+            <div class="history-label">📜 Recent Digits</div>
+            <div class="history-digits" id="historyContainer">
+                <span style="color:var(--text-muted);font-size:11px;">Waiting for data...</span>
+            </div>
+        </div>
+
+        <div class="frequency-section">
+            <div class="frequency-title">📊 Digit Frequency</div>
+            <div class="frequency-grid" id="freqGrid"></div>
+        </div>
+
+        <div class="log-section" id="logContainer">
+            <div class="log-entry info">🚀 System initializing...</div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        // APP
+        // ============================================================
+        const APP_ID = "33ZhqJCt0dF2IoKy5N4HH";
+        const PREDICTION_WINDOW = 15; // 15 seconds
+
+        const $ = id => document.getElementById(id);
+        const priceInt = $('priceInt');
+        const priceDec = $('priceDec');
+        const tickCount = $('tickCount');
+        const accDisplay = $('accDisplay');
+        const historyContainer = $('historyContainer');
+        const freqGrid = $('freqGrid');
+        const logContainer = $('logContainer');
+        const statusDot = $('statusDot');
+        const statusText = $('statusText');
+        const symbolSelect = $('symbol');
+        const predictBtn = $('predictBtn');
+        const selectedDisplay = $('selectedDisplay');
+        const predictedDisplay = $('predictedDisplay');
+        const confidenceDisplay = $('confidenceDisplay');
+        const resultStatus = $('resultStatus');
+        const countdownContainer = $('countdownContainer');
+        const countdownFill = $('countdownFill');
+        const timeLeft = $('timeLeft');
+
+        let tickHistory = [];
+        let totalTicks = 0;
+        let correctPredictions = 0;
+        let lastPrediction = null;
+        let lastDigitValue = null;
+        let currentSymbol = '1HZ100V';
+        let selectedDigit = null;
+        let lastPredictedDigit = null;
+        let countdownInterval = null;
+        let countdownValue = PREDICTION_WINDOW;
+        let isWaitingForResult = false;
+        let predictionExpired = false;
+
+        function log(msg, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${msg}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            if (logContainer.children.length > 50) logContainer.removeChild(logContainer.firstChild);
+            console.log(`[${type}] ${msg}`);
+        }
+
+        function setStatus(state, text) {
+            statusDot.className = `dot ${state}`;
+            statusText.textContent = text;
+        }
+
+        function updateFrequency() {
+            if (tickHistory.length === 0) {
+                freqGrid.innerHTML = '';
+                for (let i = 0; i < 10; i++) {
+                    freqGrid.innerHTML += `
+                    <div class="freq-bar-wrapper">
+                        <div class="freq-bar"><div class="fill" style="height:0%"></div></div>
+                        <div class="freq-label">${i}</div>
+                    </div>`;
+                }
+                return;
+            }
+
+            const freq = {};
+            tickHistory.forEach(d => freq[d] = (freq[d] || 0) + 1);
+            const maxFreq = Math.max(...Object.values(freq), 1);
+
+            freqGrid.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const count = freq[i] || 0;
+                const pct = (count / maxFreq) * 100;
+                const isHigh = pct > 50;
+                freqGrid.innerHTML += `
+                    <div class="freq-bar-wrapper">
+                        <div class="freq-bar">
+                            <div class="fill ${isHigh ? 'high' : ''}" style="height:${pct}%"></div>
+                        </div>
+                        <div class="freq-label">${i}</div>
+                    </div>`;
+            }
+        }
+
+        function updateHistory() {
+            if (tickHistory.length === 0) {
+                historyContainer.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Waiting for data...</span>';
+                return;
+            }
+            const digits = tickHistory.slice(-20);
+            historyContainer.innerHTML = digits.map((d, i) => {
+                const isRecent = i >= digits.length - 5;
+                const isHighlight = d === parseInt(lastDigitValue);
+                return `<span class="history-digit ${isRecent ? 'recent' : ''} ${isHighlight ? 'highlight' : ''}">${d}</span>`;
+            }).join('');
+        }
+
+        function updateConfidence() {
+            if (selectedDigit === null || tickHistory.length < 5) {
+                confidenceDisplay.textContent = '--';
+                return;
+            }
+
+            const freq = {};
+            tickHistory.forEach(d => freq[d] = (freq[d] || 0) + 1);
+            const total = tickHistory.length;
+            const digitCount = freq[selectedDigit] || 0;
+            const pct = (digitCount / total) * 100;
+
+            let confidence = 50 + (pct - 10) * 1.8;
+            confidence = Math.max(5, Math.min(92, confidence));
+
+            confidenceDisplay.textContent = Math.round(confidence) + '%';
+        }
+
+        function startCountdown() {
+            countdownContainer.classList.add('active');
+            countdownValue = PREDICTION_WINDOW;
+            predictionExpired = false;
+            isWaitingForResult = true;
+
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            countdownInterval = setInterval(() => {
+                countdownValue--;
+                const pct = (countdownValue / PREDICTION_WINDOW) * 100;
+                countdownFill.style.width = pct + '%';
+                timeLeft.textContent = countdownValue + 's';
+
+                // Update bar color based on time remaining
+                countdownFill.className = 'countdown-bar-fill';
+                if (countdownValue > 10) {
+                    countdownFill.classList.add('glow-green');
+                    timeLeft.className = 'time-left';
+                } else if (countdownValue > 5) {
+                    countdownFill.classList.add('glow-yellow');
+                    timeLeft.className = 'time-left warning';
+                } else if (countdownValue > 2) {
+                    countdownFill.classList.add('glow-orange');
+                    timeLeft.className = 'time-left warning';
+                } else {
+                    countdownFill.classList.add('glow-red');
+                    timeLeft.className = 'time-left danger';
+                }
+
+                if (countdownValue <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    timeLeft.textContent = '⏰ Expired!';
+                    predictionExpired = true;
+                    isWaitingForResult = false;
+
+                    // Show expired status
+                    resultStatus.textContent = '⏰ Prediction expired! No tick received.';
+                    resultStatus.className = 'result-status expired';
+                    log('⏰ Prediction window expired!', 'error');
+
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        countdownContainer.classList.remove('active');
+                        countdownFill.style.width = '100%';
+                        countdownFill.className = 'countdown-bar-fill glow-green';
+                        timeLeft.textContent = '15s';
+                        timeLeft.className = 'time-left';
+                        if (!predictionExpired) {
+                            resultStatus.textContent = '⚡ Select a digit and click PREDICT';
+                            resultStatus.className = 'result-status waiting';
+                        }
+                        predictionExpired = false;
+                    }, 3000);
+
+                    predictBtn.disabled = false;
+                }
+            }, 1000);
+
+            predictBtn.disabled = true;
+        }
+
+        function predictNextDigit() {
+            if (tickHistory.length < 10) return;
+
+            const freq = {};
+            tickHistory.forEach(d => freq[d] = (freq[d] || 0) + 1);
+
+            let maxFreq = 0,
+                pred = 0;
+            for (const [digit, count] of Object.entries(freq)) {
+                if (count > maxFreq) { maxFreq = count;
+                    pred = parseInt(digit); }
+            }
+
+            const currentDigit = tickHistory[tickHistory.length - 1];
+
+            if (lastPrediction !== null && lastDigitValue !== null && lastPrediction === lastDigitValue) {
+                correctPredictions++;
+            }
+
+            const acc = totalTicks > 0 ? Math.round((correctPredictions / totalTicks) * 100) : 0;
+            accDisplay.textContent = acc + '%';
+            tickCount.textContent = totalTicks;
+
+            lastPrediction = pred;
+            lastDigitValue = currentDigit;
+
+            setStatus('online', `✅ ${totalTicks} ticks · ${acc}% acc`);
+
+            // Check if we have a pending prediction and it hasn't expired
+            if (lastPredictedDigit !== null && tickHistory.length >= 2 && isWaitingForResult && !predictionExpired) {
+                const lastDigit = tickHistory[tickHistory.length - 1];
+                const isMatch = lastDigit === selectedDigit;
+
+                if (lastPredictedDigit === selectedDigit) {
+                    // Clear the countdown
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+
+                    if (isMatch) {
+                        resultStatus.textContent = '✅ CORRECT! Digit matched your prediction!';
+                        resultStatus.className = 'result-status correct';
+                        log(`✅ Correct! ${selectedDigit} matched!`, 'success');
+                        countdownFill.className = 'countdown-bar-fill glow-green';
+                        timeLeft.textContent = '✅ Hit!';
+                    } else {
+                        resultStatus.textContent = `❌ WRONG! Was ${lastDigit}, not ${selectedDigit}`;
+                        resultStatus.className = 'result-status wrong';
+                        log(`❌ Wrong! Was ${lastDigit}, not ${selectedDigit}`, 'error');
+                        countdownFill.className = 'countdown-bar-fill glow-red';
+                        timeLeft.textContent = '❌ Miss!';
+                    }
+
+                    isWaitingForResult = false;
+                    lastPredictedDigit = null;
+
+                    setTimeout(() => {
+                        countdownContainer.classList.remove('active');
+                        countdownFill.style.width = '100%';
+                        countdownFill.className = 'countdown-bar-fill glow-green';
+                        timeLeft.textContent = '15s';
+                        timeLeft.className = 'time-left';
+                        if (!predictionExpired) {
+                            resultStatus.textContent = '⚡ Select a digit and click PREDICT';
+                            resultStatus.className = 'result-status waiting';
+                        }
+                        predictBtn.disabled = false;
+                    }, 3000);
+                }
+            }
+
+            if (selectedDigit !== null) {
+                updateConfidence();
+            }
+        }
+
+        function fetchTick() {
+            const url = 'https://api.deriv.com/v3/ticks';
+            const headers = {
+                'Deriv-App-ID': APP_ID,
+                'Content-Type': 'application/json'
+            };
+            const payload = { ticks: currentSymbol, subscribe: 0 };
+
+            fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.tick) {
+                        const price = data.tick.quote;
+                        const digit = String(price).slice(-1);
+
+                        const [intPart, decPart] = price.toFixed(3).split('.');
+                        priceInt.textContent = intPart;
+                        priceDec.textContent = '.' + decPart;
+
+                        tickHistory.push(parseInt(digit));
+                        if (tickHistory.length > 50) tickHistory.shift();
+                        totalTicks++;
+
+                        updateHistory();
+                        updateFrequency();
+                        predictNextDigit();
+
+                        if (totalTicks % 5 === 0) {
+                            log(`✅ Tick #${totalTicks}: ${price} → digit ${digit}`, 'success');
+                        }
+                    } else if (data.error) {
+                        log(`❌ API Error: ${data.error.message}`, 'error');
+                        setStatus('offline', '⚠️ API Error');
+                    }
+                })
+                .catch(err => {
+                    log(`❌ Fetch error: ${err.message}`, 'error');
+                    setStatus('offline', '⚠️ Network Error');
+                });
+        }
+
+        document.querySelectorAll('.digit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (isWaitingForResult && !predictionExpired) {
+                    resultStatus.textContent = '⏳ Please wait for current prediction to complete...';
+                    resultStatus.className = 'result-status waiting';
+                    return;
+                }
+
+                document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedDigit = parseInt(this.dataset.digit);
+                selectedDisplay.textContent = selectedDigit;
+                resultStatus.textContent = '✅ Digit selected! Click PREDICT';
+                resultStatus.className = 'result-status waiting';
+                updateConfidence();
+                log(`🎯 Selected digit: ${selectedDigit}`, 'info');
+            });
+        });
+
+        predictBtn.addEventListener('click', function() {
+            if (isWaitingForResult && !predictionExpired) {
+                resultStatus.textContent = '⏳ Please wait for current prediction to complete...';
+                resultStatus.className = 'result-status waiting';
+                return;
+            }
+
+            if (selectedDigit === null) {
+                resultStatus.textContent = '⚠️ Please select a digit first!';
+                resultStatus.className = 'result-status wrong';
+                log('⚠️ No digit selected', 'error');
+                return;
+            }
+
+            if (tickHistory.length < 10) {
+                resultStatus.textContent = '⏳ Waiting for more data... (need 10 ticks)';
+                resultStatus.className = 'result-status waiting';
+                log('⏳ Not enough data yet', 'info');
+                return;
+            }
+
+            lastPredictedDigit = selectedDigit;
+            predictedDisplay.textContent = selectedDigit;
+
+            const freq = {};
+            tickHistory.forEach(d => freq[d] = (freq[d] || 0) + 1);
+            const total = tickHistory.length;
+            const digitCount = freq[selectedDigit] || 0;
+            const pct = (digitCount / total) * 100;
+            let confidence = 50 + (pct - 10) * 1.8;
+            confidence = Math.max(5, Math.min(92, confidence));
+
+            confidenceDisplay.textContent = Math.round(confidence) + '%';
+
+            resultStatus.textContent = `⏳ Waiting ${PREDICTION_WINDOW}s for ${selectedDigit}...`;
+            resultStatus.className = 'result-status waiting';
+
+            log(`🎯 PREDICTED: ${selectedDigit} (${Math.round(confidence)}% confidence)`, 'info');
+
+            // Start the 15-second countdown
+            startCountdown();
+        });
+
+        symbolSelect.addEventListener('change', function() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            countdownContainer.classList.remove('active');
+            countdownFill.style.width = '100%';
+            countdownFill.className = 'countdown-bar-fill glow-green';
+            timeLeft.textContent = '15s';
+            timeLeft.className = 'time-left';
+            isWaitingForResult = false;
+            predictionExpired = false;
+            predictBtn.disabled = false;
+
+            currentSymbol = this.value;
+            tickHistory = [];
+            totalTicks = 0;
+            correctPredictions = 0;
+            lastPrediction = null;
+            lastDigitValue = null;
+            selectedDigit = null;
+            lastPredictedDigit = null;
+            document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('selected'));
+            selectedDisplay.textContent = '-';
+            predictedDisplay.textContent = '-';
+            confidenceDisplay.textContent = '-';
+            priceInt.textContent = '--';
+            priceDec.textContent = '--';
+            tickCount.textContent = '0';
+            accDisplay.textContent = '0%';
+            resultStatus.textContent = '⚡ Select a digit and click PREDICT';
+            resultStatus.className = 'result-status waiting';
+            updateHistory();
+            updateFrequency();
+            log(`🔄 Switched to ${currentSymbol}`, 'info');
+            setStatus('connecting', '⏳ Switching...');
+            fetchTick();
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        log('🚀 Deriv Match Predictor initializing...', 'info');
+        setStatus('connecting', '⏳ Connecting...');
+        updateFrequency();
+
+        fetchTick();
+        setInterval(fetchTick, 2000);
+        log('✅ Live polling every 2s', 'success');
+        setStatus('online', '✅ Live');
+    </script>
+
+</body>
+</html>

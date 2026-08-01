@@ -901,11 +901,6 @@
         // ⚠️ USE YOUR STRING APP ID HERE
         const APP_ID = "33ZhqJCt0dF2IoKy5N4HH"; // <--- YOUR STRING APP ID
 
-        // ================================================================
-        // CORS PROXY
-        // ================================================================
-        const PROXY_URL = "https://api.allorigins.win/raw?url=";
-
         const PREDICTION_WINDOW = 15;
 
         // ================================================================
@@ -1246,7 +1241,7 @@
         }
 
         // ================================================================
-        // FETCH MANAGER (REST API with CORS Proxy)
+        // FETCH MANAGER (Direct REST API - No Proxy)
         // ================================================================
 
         class FetchManager {
@@ -1259,6 +1254,8 @@
                 this.isRunning = false;
                 this.timer = null;
                 this.isConnected = false;
+                this.failCount = 0;
+                this.maxFailures = 5;
             }
 
             start() {
@@ -1266,7 +1263,7 @@
                 this.isRunning = true;
                 this.isConnected = true;
                 this._setStatus('online', '✅ Connected');
-                this.onLog('Started polling (REST API via proxy)', 'info');
+                this.onLog('Started polling (REST API)', 'info');
                 this._fetchTick();
                 this.timer = setInterval(() => this._fetchTick(), 2000);
             }
@@ -1283,19 +1280,14 @@
             }
 
             _fetchTick() {
-                const url = 'https://api.deriv.com/v3/ticks';
-                const headers = {
-                    'Deriv-App-ID': this.appId,
-                    'Content-Type': 'application/json'
-                };
-                const payload = { ticks: this.currentSymbol, subscribe: 0 };
+                // Use the correct endpoint format
+                const url = `https://api.deriv.com/v3/ticks?ticks=${this.currentSymbol}&app_id=${this.appId}`;
 
-                const proxyUrl = PROXY_URL + encodeURIComponent(url);
-
-                fetch(proxyUrl, {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify(payload)
+                fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
                     })
                     .then(response => {
                         if (!response.ok) {
@@ -1304,34 +1296,42 @@
                         return response.json();
                     })
                     .then(data => {
+                        this.failCount = 0;
                         if (data.tick) {
                             this.isConnected = true;
                             this._setStatus('online', '✅ Connected');
                             this.onTick(data.tick);
                         } else if (data.error) {
                             this.onLog(`API Error: ${data.error.message}`, 'error');
-                            this._setStatus('offline', '⚠️ API Error');
+                            this._handleFailure();
                         }
                     })
                     .catch(err => {
-                        this.isConnected = false;
-                        this._setStatus('offline', '⚠️ Network Error');
+                        this._handleFailure();
                         this.onLog(`Fetch error: ${err.message}`, 'error');
                     });
             }
 
+            _handleFailure() {
+                this.failCount++;
+                if (this.failCount >= this.maxFailures) {
+                    this.isConnected = false;
+                    this._setStatus('offline', '⚠️ Connection Lost');
+                } else {
+                    this._setStatus('connecting', '⏳ Reconnecting...');
+                }
+            }
+
             subscribe(symbol) {
                 this.currentSymbol = symbol;
+                this.failCount = 0;
                 this.onLog(`Switched to ${symbol}`, 'info');
-                if (this.isRunning) {
-                    // Reset connection status
-                    this._setStatus('connecting', '⏳ Switching...');
-                    setTimeout(() => {
-                        if (this.isConnected) {
-                            this._setStatus('online', '✅ Connected');
-                        }
-                    }, 500);
-                }
+                this._setStatus('connecting', '⏳ Switching...');
+                setTimeout(() => {
+                    if (this.isConnected) {
+                        this._setStatus('online', '✅ Connected');
+                    }
+                }, 500);
             }
 
             _setStatus(state, text) {

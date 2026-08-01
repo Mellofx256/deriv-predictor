@@ -81,7 +81,6 @@
             box-shadow: 0 12px 56px rgba(0, 0, 0, 0.7);
         }
 
-        /* ============ HEADER ============ */
         .header {
             display: flex;
             justify-content: space-between;
@@ -132,7 +131,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* ============ STATUS BAR ============ */
         .status-bar {
             display: flex;
             justify-content: space-between;
@@ -199,7 +197,6 @@
             font-weight: 600;
         }
 
-        /* ============ SELECTOR ============ */
         .selector-wrapper {
             margin-bottom: 12px;
         }
@@ -255,7 +252,6 @@
             box-shadow: 0 0 20px rgba(108, 60, 176, 0.15);
         }
 
-        /* ============ PRICE ============ */
         .price-section {
             text-align: center;
             padding: 10px 0 8px;
@@ -281,7 +277,6 @@
             color: #22d3ee;
         }
 
-        /* ============ PREDICT BUTTON ============ */
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
@@ -362,7 +357,6 @@
             }
         }
 
-        /* ============ COUNTDOWN ============ */
         .countdown-container {
             margin: 14px 0 16px;
             padding: 12px 16px;
@@ -460,7 +454,6 @@
             }
         }
 
-        /* ============ RESULTS ============ */
         .result-section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -510,7 +503,6 @@
             text-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
         }
 
-        /* ============ RESULT STATUS ============ */
         .result-status {
             text-align: center;
             font-size: 12px;
@@ -554,7 +546,6 @@
             border-color: rgba(245, 158, 11, 0.15);
         }
 
-        /* ============ HISTORY ============ */
         .history-section {
             background: var(--bg-glass);
             border-radius: 12px;
@@ -606,7 +597,6 @@
             color: var(--history-highlight-color);
         }
 
-        /* ============ FREQUENCY ============ */
         .frequency-section {
             margin: 12px 0 14px;
         }
@@ -662,7 +652,6 @@
             color: var(--text-secondary);
         }
 
-        /* ============ LOG ============ */
         .log-section {
             margin-top: 12px;
             padding: 8px 12px;
@@ -700,7 +689,6 @@
             color: #f59e0b;
         }
 
-        /* ============ RESPONSIVE ============ */
         @media (max-width: 420px) {
             .container {
                 padding: 16px 12px;
@@ -736,7 +724,6 @@
 
     <div class="container">
 
-        <!-- HEADER -->
         <div class="header">
             <div class="logo">
                 <div class="logo-icon">🎯</div>
@@ -745,7 +732,6 @@
             <div class="badge">Live</div>
         </div>
 
-        <!-- STATUS BAR -->
         <div class="status-bar">
             <div class="status-dot">
                 <span class="dot online" id="statusDot"></span>
@@ -757,35 +743,33 @@
             </div>
         </div>
 
-        <!-- SELECTOR -->
         <div class="selector-wrapper">
             <label>📊 Select Index</label>
             <select id="symbol">
                 <optgroup label="⚡ 1-Second Volatility Indices">
-                    <option value="1HZ10V">Volatility 10 (1s) – 10%</option>
-                    <option value="1HZ15V">Volatility 15 (1s) – 15%</option>
-                    <option value="1HZ25V">Volatility 25 (1s) – 25%</option>
-                    <option value="1HZ30V">Volatility 30 (1s) – 30%</option>
-                    <option value="1HZ50V">Volatility 50 (1s) – 50%</option>
-                    <option value="1HZ75V">Volatility 75 (1s) – 75%</option>
-                    <option value="1HZ90V">Volatility 90 (1s) – 90%</option>
-                    <option value="1HZ100V" selected>Volatility 100 (1s) – 100%</option>
-                    <option value="1HZ150V">Volatility 150 (1s) – 150%</option>
-                    <option value="1HZ200V">Volatility 200 (1s) – 200%</option>
-                    <option value="1HZ250V">Volatility 250 (1s) – 250%</option>
-                    <option value="1HZ300V">Volatility 300 (1s) – 300%</option>
+                    <option value="1HZ10V">Volatility 10 (1s)</option>
+                    <option value="1HZ15V">Volatility 15 (1s)</option>
+                    <option value="1HZ25V">Volatility 25 (1s)</option>
+                    <option value="1HZ30V">Volatility 30 (1s)</option>
+                    <option value="1HZ50V">Volatility 50 (1s)</option>
+                    <option value="1HZ75V">Volatility 75 (1s)</option>
+                    <option value="1HZ90V">Volatility 90 (1s)</option>
+                    <option value="1HZ100V" selected>Volatility 100 (1s)</option>
+                    <option value="1HZ150V">Volatility 150 (1s)</option>
+                    <option value="1HZ200V">Volatility 200 (1s)</option>
+                    <option value="1HZ250V">Volatility 250 (1s)</option>
+                    <option value="1HZ300V">Volatility 300 (1s)</option>
                 </optgroup>
                 <optgroup label="📊 Standard Volatility (2s)">
-                    <option value="R_10">Volatility 10 – 10%</option>
-                    <option value="R_25">Volatility 25 – 25%</option>
-                    <option value="R_50">Volatility 50 – 50%</option>
-                    <option value="R_75">Volatility 75 – 75%</option>
-                    <option value="R_100">Volatility 100 – 100%</option>
+                    <option value="R_10">Volatility 10</option>
+                    <option value="R_25">Volatility 25</option>
+                    <option value="R_50">Volatility 50</option>
+                    <option value="R_75">Volatility 75</option>
+                    <option value="R_100">Volatility 100</option>
                 </optgroup>
             </select>
         </div>
 
-        <!-- PRICE -->
         <div class="price-section">
             <div class="price-label">Current Price</div>
             <div class="price-value" id="priceDisplay">
@@ -793,7 +777,6 @@
             </div>
         </div>
 
-        <!-- PREDICT BUTTON -->
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
@@ -801,7 +784,6 @@
             </button>
         </div>
 
-        <!-- COUNTDOWN -->
         <div class="countdown-container" id="countdownContainer">
             <div class="countdown-label">
                 <span>⏳ Prediction Window</span>
@@ -812,7 +794,6 @@
             </div>
         </div>
 
-        <!-- RESULTS -->
         <div class="result-section">
             <div class="result-item">
                 <div class="label">Predicted</div>
@@ -828,10 +809,8 @@
             </div>
         </div>
 
-        <!-- RESULT STATUS -->
         <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to start</div>
 
-        <!-- HISTORY -->
         <div class="history-section">
             <div class="history-label">📜 Recent Digits</div>
             <div class="history-digits" id="historyContainer">
@@ -839,13 +818,11 @@
             </div>
         </div>
 
-        <!-- FREQUENCY -->
         <div class="frequency-section">
             <div class="frequency-title">📊 Digit Frequency</div>
             <div class="frequency-grid" id="freqGrid"></div>
         </div>
 
-        <!-- LOG -->
         <div class="log-section" id="logContainer">
             <div class="log-entry info">🚀 System initializing...</div>
         </div>
@@ -1138,11 +1115,9 @@
 
             predict() {
                 if (this.history.length === 0) {
-                    // No data yet - return a random digit
                     return Math.floor(Math.random() * 10);
                 }
 
-                // Use frequency analysis
                 const freq = {};
                 this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
                 let maxFreq = 0,
@@ -1156,7 +1131,6 @@
 
             getConfidence(digit) {
                 if (this.history.length < 3 || digit === null) {
-                    // Low confidence for small datasets
                     return 35 + Math.floor(Math.random() * 20);
                 }
 
@@ -1222,7 +1196,6 @@
                 this.isSubscribed = false;
                 this.isClosing = false;
                 this.reconnectTimer = null;
-                this.tickCount = 0;
             }
 
             connect() {
@@ -1273,7 +1246,6 @@
                     const data = JSON.parse(event.data);
 
                     if (data.msg_type === 'tick' && data.tick) {
-                        this.tickCount++;
                         this.onTick(data.tick);
                     }
 
@@ -1394,7 +1366,6 @@
 
                 this.socket = null;
                 this.initialized = false;
-                this.isFirstPrediction = true;
 
                 this._bindUI();
                 this._init();
@@ -1494,7 +1465,6 @@
                         return;
                     }
 
-                    // Always allow prediction - even with 0 history
                     const pred = this.predictionEngine.predict();
 
                     DOM.predictedDisplay.textContent = pred;

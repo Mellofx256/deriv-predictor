@@ -786,7 +786,7 @@
         <div class="status-bar">
             <div class="status-dot">
                 <span class="dot online" id="statusDot"></span>
-                <span id="statusText">Connected</span>
+                <span id="statusText">Connecting...</span>
             </div>
             <div class="stats-mini">
                 <span>⏱ <span id="tickCount">0</span></span>
@@ -898,8 +898,11 @@
         // CONFIGURATION
         // ================================================================
 
-        // ⚠️ USE YOUR STRING APP ID HERE
+        // ⚠️ YOUR STRING APP ID (from Deriv Dashboard)
         const APP_ID = "33ZhqJCt0dF2IoKy5N4HH";
+        
+        // ⚠️ YOUR API TOKEN (Personal Access Token with Trade scope)
+        const API_TOKEN = "pat_4ed01f21a3f1f219f1bdaa23af60da719bd1d5a797536db3cdefc2adb62db91d";
 
         const PREDICTION_WINDOW = 15;
 
@@ -1241,23 +1244,24 @@
         }
 
         // ================================================================
-        // DERIV WEBSOCKET MANAGER (Works with String App ID)
+        // DERIV WEBSOCKET WITH CORRECT AUTHENTICATION
         // ================================================================
 
         class DerivSocket {
-            constructor(appId, onTick, onStatus, onLog) {
+            constructor(appId, apiToken, onTick, onStatus, onLog) {
                 this.appId = appId;
+                this.apiToken = apiToken;
                 this.onTick = onTick;
                 this.onStatus = onStatus;
                 this.onLog = onLog;
                 this.ws = null;
                 this.isConnected = false;
                 this.isConnecting = false;
+                this.isAuthorized = false;
                 this.reconnectAttempts = 0;
                 this.maxReconnectDelay = 30000;
                 this.reconnectDelay = 2000;
                 this.currentSymbol = '1HZ100V';
-                this.subscriptionId = null;
                 this.isSubscribed = false;
                 this.isClosing = false;
                 this.msgId = 1;
@@ -1270,7 +1274,7 @@
                 this._setStatus('connecting', '⏳ Connecting...');
                 this.onLog('Connecting to Deriv WebSocket...', 'info');
 
-                // Use the correct WebSocket endpoint
+                // WebSocket URL with App ID
                 const url = `wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`;
 
                 try {
@@ -1291,44 +1295,53 @@
                 this.isConnecting = false;
                 this.reconnectAttempts = 0;
                 this.reconnectDelay = 2000;
-                this._setStatus('online', '✅ Connected');
-                this.onLog('WebSocket connected', 'success');
+                this._setStatus('connecting', '🔑 Authorizing...');
+                this.onLog('WebSocket connected, authorizing...', 'info');
 
-                // Subscribe to current symbol
-                this._sendSubscribe(this.currentSymbol);
+                // Send authorization with API token
+                const authMsg = {
+                    authorize: this.apiToken,
+                    req_id: this.msgId++
+                };
+                this.ws.send(JSON.stringify(authMsg));
+                this.onLog('📤 Sent authorization request', 'info');
             }
 
             _onMessage(event) {
                 try {
                     const data = JSON.parse(event.data);
 
-                    // Check for tick data
+                    // Handle authorization response
+                    if (data.msg_type === 'authorize') {
+                        if (data.authorize) {
+                            this.isAuthorized = true;
+                            this._setStatus('online', '✅ Authorized');
+                            this.onLog('✅ Authorization successful!', 'success');
+                            
+                            // Subscribe to current symbol after authorization
+                            this._subscribe(this.currentSymbol);
+                        } else if (data.error) {
+                            this.onLog(`❌ Authorization error: ${data.error.message}`, 'error');
+                            this._setStatus('offline', '❌ Auth failed');
+                            this.isAuthorized = false;
+                        }
+                    }
+
+                    // Handle tick data
                     if (data.msg_type === 'tick' && data.tick) {
                         this.onTick(data.tick);
                     }
 
-                    // Check for subscription confirmation
+                    // Handle subscription confirmation
                     if (data.msg_type === 'subscription') {
-                        this.subscriptionId = data.subscription?.id || null;
                         this.isSubscribed = true;
-                        this.onLog(`Subscribed to ${this.currentSymbol}`, 'success');
+                        this.onLog(`✅ Subscribed to ${this.currentSymbol}`, 'success');
                     }
 
-                    // Check for errors
+                    // Handle errors
                     if (data.msg_type === 'error') {
-                        this.onLog(`API Error: ${data.error?.message || 'Unknown error'}`, 'error');
-                        if (data.error?.code === 'InvalidAppID') {
-                            this.onLog('⚠️ Invalid App ID. Please check your App ID.', 'error');
-                        }
-                    }
-
-                    // Check for authorization
-                    if (data.msg_type === 'authorize') {
-                        if (data.authorize) {
-                            this.onLog('Authorized successfully', 'success');
-                        } else if (data.error) {
-                            this.onLog(`Authorization error: ${data.error.message}`, 'error');
-                        }
+                        const msg = data.error?.message || 'Unknown error';
+                        this.onLog(`❌ API Error: ${msg}`, 'error');
                     }
 
                     // Handle ping/pong
@@ -1345,6 +1358,7 @@
                 this.isConnected = false;
                 this.isConnecting = false;
                 this.isSubscribed = false;
+                this.isAuthorized = false;
                 this._setStatus('offline', '🔌 Disconnected');
                 this.onLog(`Disconnected (code: ${event.code})`, 'error');
 
@@ -1371,12 +1385,10 @@
                 this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
             }
 
-            _sendSubscribe(symbol) {
-                if (!this.isConnected || !this.ws) return;
-
-                // Unsubscribe from previous if any
-                if (this.isSubscribed && this.subscriptionId) {
-                    this._sendUnsubscribe();
+            _subscribe(symbol) {
+                if (!this.isConnected || !this.ws || !this.isAuthorized) {
+                    this.onLog(`⚠️ Cannot subscribe: not connected/authorized`, 'error');
+                    return;
                 }
 
                 const msg = {
@@ -1386,26 +1398,14 @@
                 };
                 this.ws.send(JSON.stringify(msg));
                 this.currentSymbol = symbol;
-                this.onLog(`Subscribing to ${symbol}...`, 'info');
-            }
-
-            _sendUnsubscribe() {
-                if (!this.isConnected || !this.ws || !this.subscriptionId) return;
-                const msg = {
-                    forget: this.subscriptionId,
-                    req_id: this.msgId++
-                };
-                this.ws.send(JSON.stringify(msg));
-                this.isSubscribed = false;
-                this.subscriptionId = null;
-                this.onLog(`Unsubscribed from ${this.currentSymbol}`, 'info');
+                this.onLog(`📤 Subscribing to ${symbol}...`, 'info');
             }
 
             subscribe(symbol) {
                 if (symbol === this.currentSymbol && this.isSubscribed) return;
                 this.currentSymbol = symbol;
-                if (this.isConnected) {
-                    this._sendSubscribe(symbol);
+                if (this.isConnected && this.isAuthorized) {
+                    this._subscribe(symbol);
                 }
             }
 
@@ -1416,6 +1416,7 @@
                 }
                 this.isConnected = false;
                 this.isConnecting = false;
+                this.isAuthorized = false;
                 this._setStatus('offline', '🔌 Disconnected');
                 this.onLog('Disconnected manually', 'info');
             }
@@ -1425,7 +1426,7 @@
             }
 
             isActive() {
-                return this.isConnected;
+                return this.isConnected && this.isAuthorized;
             }
         }
 
@@ -1460,9 +1461,10 @@
 
                 this.logger.log('🚀 Deriv Match Predictor initializing...', 'info');
 
-                // Start WebSocket
+                // Start WebSocket with correct authentication
                 this.socket = new DerivSocket(
                     APP_ID,
+                    API_TOKEN,
                     this._handleTick.bind(this),
                     this._handleStatus.bind(this),
                     this.logger.log.bind(this.logger)

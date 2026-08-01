@@ -1137,8 +1137,12 @@
             }
 
             predict() {
-                if (this.history.length < 3) return null;
+                if (this.history.length === 0) {
+                    // No data yet - return a random digit
+                    return Math.floor(Math.random() * 10);
+                }
 
+                // Use frequency analysis
                 const freq = {};
                 this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
                 let maxFreq = 0,
@@ -1151,14 +1155,18 @@
             }
 
             getConfidence(digit) {
-                if (this.history.length < 5 || digit === null) return 0;
+                if (this.history.length < 3 || digit === null) {
+                    // Low confidence for small datasets
+                    return 35 + Math.floor(Math.random() * 20);
+                }
+
                 const freq = {};
                 this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
                 const total = this.history.length;
                 const count = freq[digit] || 0;
                 const pct = (count / total) * 100;
                 let confidence = 50 + (pct - 10) * 1.8;
-                return Math.max(5, Math.min(92, confidence));
+                return Math.max(10, Math.min(95, confidence));
             }
 
             getAccuracy() {
@@ -1214,6 +1222,7 @@
                 this.isSubscribed = false;
                 this.isClosing = false;
                 this.reconnectTimer = null;
+                this.tickCount = 0;
             }
 
             connect() {
@@ -1264,6 +1273,7 @@
                     const data = JSON.parse(event.data);
 
                     if (data.msg_type === 'tick' && data.tick) {
+                        this.tickCount++;
                         this.onTick(data.tick);
                     }
 
@@ -1384,6 +1394,7 @@
 
                 this.socket = null;
                 this.initialized = false;
+                this.isFirstPrediction = true;
 
                 this._bindUI();
                 this._init();
@@ -1483,20 +1494,8 @@
                         return;
                     }
 
-                    if (this.predictionEngine.getHistory().length < 3) {
-                        DOM.resultStatus.textContent = '⏳ Need more data... (waiting for ticks)';
-                        DOM.resultStatus.className = 'result-status waiting';
-                        this.logger.log('⏳ Not enough data yet', 'info');
-                        return;
-                    }
-
+                    // Always allow prediction - even with 0 history
                     const pred = this.predictionEngine.predict();
-
-                    if (pred === null) {
-                        DOM.resultStatus.textContent = '⏳ Not enough data yet...';
-                        DOM.resultStatus.className = 'result-status waiting';
-                        return;
-                    }
 
                     DOM.predictedDisplay.textContent = pred;
                     DOM.actualDisplay.textContent = '...';

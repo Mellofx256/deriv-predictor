@@ -1244,181 +1244,100 @@
         }
 
         // ================================================================
-        // DERIV WEBSOCKET WITH CORRECT AUTHENTICATION
+        // REST API FETCHER (No WebSocket - Works from Anywhere)
         // ================================================================
 
-        class DerivSocket {
-            constructor(appId, apiToken, onTick, onStatus, onLog) {
+        class DerivFetcher {
+            constructor(appId, onTick, onStatus, onLog) {
                 this.appId = appId;
-                this.apiToken = apiToken;
                 this.onTick = onTick;
                 this.onStatus = onStatus;
                 this.onLog = onLog;
-                this.ws = null;
-                this.isConnected = false;
-                this.isConnecting = false;
-                this.isAuthorized = false;
-                this.reconnectAttempts = 0;
-                this.maxReconnectDelay = 30000;
-                this.reconnectDelay = 2000;
                 this.currentSymbol = '1HZ100V';
-                this.isSubscribed = false;
-                this.isClosing = false;
-                this.msgId = 1;
-            }
-
-            connect() {
-                if (this.isConnected || this.isConnecting) return;
-                this.isConnecting = true;
-                this.isClosing = false;
-                this._setStatus('connecting', '⏳ Connecting...');
-                this.onLog('Connecting to Deriv WebSocket...', 'info');
-
-                // WebSocket URL with App ID
-                const url = `wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`;
-
-                try {
-                    this.ws = new WebSocket(url);
-                    this.ws.onopen = this._onOpen.bind(this);
-                    this.ws.onmessage = this._onMessage.bind(this);
-                    this.ws.onclose = this._onClose.bind(this);
-                    this.ws.onerror = this._onError.bind(this);
-                } catch (err) {
-                    this.onLog(`Connection error: ${err.message}`, 'error');
-                    this.isConnecting = false;
-                    this._scheduleReconnect();
-                }
-            }
-
-            _onOpen() {
-                this.isConnected = true;
-                this.isConnecting = false;
-                this.reconnectAttempts = 0;
-                this.reconnectDelay = 2000;
-                this._setStatus('connecting', '🔑 Authorizing...');
-                this.onLog('WebSocket connected, authorizing...', 'info');
-
-                // Send authorization with API token
-                const authMsg = {
-                    authorize: this.apiToken,
-                    req_id: this.msgId++
-                };
-                this.ws.send(JSON.stringify(authMsg));
-                this.onLog('📤 Sent authorization request', 'info');
-            }
-
-            _onMessage(event) {
-                try {
-                    const data = JSON.parse(event.data);
-
-                    // Handle authorization response
-                    if (data.msg_type === 'authorize') {
-                        if (data.authorize) {
-                            this.isAuthorized = true;
-                            this._setStatus('online', '✅ Authorized');
-                            this.onLog('✅ Authorization successful!', 'success');
-                            
-                            // Subscribe to current symbol after authorization
-                            this._subscribe(this.currentSymbol);
-                        } else if (data.error) {
-                            this.onLog(`❌ Authorization error: ${data.error.message}`, 'error');
-                            this._setStatus('offline', '❌ Auth failed');
-                            this.isAuthorized = false;
-                        }
-                    }
-
-                    // Handle tick data
-                    if (data.msg_type === 'tick' && data.tick) {
-                        this.onTick(data.tick);
-                    }
-
-                    // Handle subscription confirmation
-                    if (data.msg_type === 'subscription') {
-                        this.isSubscribed = true;
-                        this.onLog(`✅ Subscribed to ${this.currentSymbol}`, 'success');
-                    }
-
-                    // Handle errors
-                    if (data.msg_type === 'error') {
-                        const msg = data.error?.message || 'Unknown error';
-                        this.onLog(`❌ API Error: ${msg}`, 'error');
-                    }
-
-                    // Handle ping/pong
-                    if (data.msg_type === 'ping') {
-                        this.ws.send(JSON.stringify({ pong: data.ping }));
-                    }
-
-                } catch (err) {
-                    this.onLog(`Parse error: ${err.message}`, 'error');
-                }
-            }
-
-            _onClose(event) {
+                this.isRunning = false;
+                this.timer = null;
                 this.isConnected = false;
-                this.isConnecting = false;
-                this.isSubscribed = false;
-                this.isAuthorized = false;
+                this.failCount = 0;
+                this.maxFailures = 5;
+                this.lastTick = null;
+            }
+
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.isConnected = true;
+                this._setStatus('online', '✅ Connected');
+                this.onLog('Started fetching ticks via REST API', 'info');
+                this._fetchTick();
+                this.timer = setInterval(() => this._fetchTick(), 2000);
+            }
+
+            stop() {
+                this.isRunning = false;
+                this.isConnected = false;
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
                 this._setStatus('offline', '🔌 Disconnected');
-                this.onLog(`Disconnected (code: ${event.code})`, 'error');
+                this.onLog('Stopped fetching', 'info');
+            }
 
-                if (!this.isClosing) {
-                    this._scheduleReconnect();
+            _fetchTick() {
+                // Use the correct endpoint format with app_id in URL
+                const url = `https://api.deriv.com/v3/ticks?ticks=${this.currentSymbol}&app_id=${this.appId}`;
+
+                fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.failCount = 0;
+                        if (data.tick) {
+                            this.isConnected = true;
+                            this._setStatus('online', '✅ Connected');
+                            this.lastTick = data.tick;
+                            this.onTick(data.tick);
+                        } else if (data.error) {
+                            this.onLog(`API Error: ${data.error.message}`, 'error');
+                            this._handleFailure();
+                        }
+                    })
+                    .catch(err => {
+                        this._handleFailure();
+                        this.onLog(`Fetch error: ${err.message}`, 'error');
+                    });
+            }
+
+            _handleFailure() {
+                this.failCount++;
+                if (this.failCount >= this.maxFailures) {
+                    this.isConnected = false;
+                    this._setStatus('offline', '⚠️ Connection Lost');
+                } else {
+                    this._setStatus('connecting', '⏳ Reconnecting...');
                 }
-            }
-
-            _onError(error) {
-                this.onLog(`WebSocket error: ${error.message || 'Unknown'}`, 'error');
-                this._setStatus('offline', '⚠️ Error');
-            }
-
-            _scheduleReconnect() {
-                if (this.isClosing) return;
-                this.reconnectAttempts++;
-                const delay = Math.min(this.reconnectDelay, this.maxReconnectDelay);
-                this.onLog(`Reconnecting in ${delay/1000}s... (attempt ${this.reconnectAttempts})`, 'info');
-                setTimeout(() => {
-                    if (!this.isConnected && !this.isClosing) {
-                        this.connect();
-                    }
-                }, delay);
-                this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
-            }
-
-            _subscribe(symbol) {
-                if (!this.isConnected || !this.ws || !this.isAuthorized) {
-                    this.onLog(`⚠️ Cannot subscribe: not connected/authorized`, 'error');
-                    return;
-                }
-
-                const msg = {
-                    ticks: symbol,
-                    subscribe: 1,
-                    req_id: this.msgId++
-                };
-                this.ws.send(JSON.stringify(msg));
-                this.currentSymbol = symbol;
-                this.onLog(`📤 Subscribing to ${symbol}...`, 'info');
             }
 
             subscribe(symbol) {
-                if (symbol === this.currentSymbol && this.isSubscribed) return;
                 this.currentSymbol = symbol;
-                if (this.isConnected && this.isAuthorized) {
-                    this._subscribe(symbol);
-                }
-            }
-
-            disconnect() {
-                this.isClosing = true;
-                if (this.ws) {
-                    this.ws.close();
-                }
-                this.isConnected = false;
-                this.isConnecting = false;
-                this.isAuthorized = false;
-                this._setStatus('offline', '🔌 Disconnected');
-                this.onLog('Disconnected manually', 'info');
+                this.failCount = 0;
+                this.onLog(`Switched to ${symbol}`, 'info');
+                this._setStatus('connecting', '⏳ Switching...');
+                setTimeout(() => {
+                    if (this.isConnected) {
+                        this._setStatus('online', '✅ Connected');
+                    }
+                }, 500);
             }
 
             _setStatus(state, text) {
@@ -1426,7 +1345,7 @@
             }
 
             isActive() {
-                return this.isConnected && this.isAuthorized;
+                return this.isConnected;
             }
         }
 
@@ -1447,7 +1366,7 @@
                     PREDICTION_WINDOW
                 );
 
-                this.socket = null;
+                this.fetcher = null;
                 this.selectedDigit = null;
                 this.initialized = false;
 
@@ -1461,16 +1380,15 @@
 
                 this.logger.log('🚀 Deriv Match Predictor initializing...', 'info');
 
-                // Start WebSocket with correct authentication
-                this.socket = new DerivSocket(
+                // Start REST API Fetcher
+                this.fetcher = new DerivFetcher(
                     APP_ID,
-                    API_TOKEN,
                     this._handleTick.bind(this),
                     this._handleStatus.bind(this),
                     this.logger.log.bind(this.logger)
                 );
 
-                this.socket.connect();
+                this.fetcher.start();
 
                 // Set countdown expiry handler
                 this.countdown.setExpiredCallback(() => {
@@ -1647,7 +1565,7 @@
                     this.frequencyManager.clear();
 
                     this.logger.log(`🔄 Switched to ${symbol}`, 'info');
-                    this.socket.subscribe(symbol);
+                    this.fetcher.subscribe(symbol);
                 });
             }
         }

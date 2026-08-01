@@ -277,6 +277,46 @@
             color: #22d3ee;
         }
 
+        /* ============ LOADING SPINNER ============ */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            margin: 10px 0;
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 10px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #e94560;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .loading-timer {
+            color: #22d3ee;
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        /* ============ PREDICT BUTTON ============ */
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
@@ -331,7 +371,7 @@
         }
 
         .predict-btn:disabled {
-            opacity: 0.4;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
@@ -357,6 +397,7 @@
             }
         }
 
+        /* ============ COUNTDOWN BAR ============ */
         .countdown-container {
             margin: 14px 0 16px;
             padding: 12px 16px;
@@ -454,6 +495,7 @@
             }
         }
 
+        /* ============ RESULTS ============ */
         .result-section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -490,12 +532,18 @@
         .result-item .value.predicted {
             color: #e94560;
             text-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
+            font-size: 48px;
         }
 
         .result-item .value.confidence {
             font-size: 24px;
             color: #10b981;
             text-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+        }
+
+        .result-item .value.status-text {
+            font-size: 20px;
+            color: #f59e0b;
         }
 
         .result-status {
@@ -516,6 +564,12 @@
             border-color: var(--border-color);
         }
 
+        .result-status.loading {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.15);
+        }
+
         .result-status.expired {
             color: #e94560;
             background: rgba(233, 69, 96, 0.08);
@@ -523,16 +577,22 @@
             animation: pulseText 0.5s ease-in-out infinite alternate;
         }
 
-        .result-status.info {
-            color: #f59e0b;
-            background: rgba(245, 158, 11, 0.08);
-            border-color: rgba(245, 158, 11, 0.15);
-        }
-
         .result-status.active {
             color: #22d3ee;
             background: rgba(34, 211, 238, 0.08);
             border-color: rgba(34, 211, 238, 0.15);
+        }
+
+        .result-status.correct {
+            color: #22d3ee;
+            background: rgba(34, 211, 238, 0.08);
+            border-color: rgba(34, 211, 238, 0.15);
+        }
+
+        .result-status.wrong {
+            color: #e94560;
+            background: rgba(233, 69, 96, 0.08);
+            border-color: rgba(233, 69, 96, 0.15);
         }
 
         .history-section {
@@ -689,6 +749,9 @@
                 padding: 16px 30px;
                 font-size: 20px;
             }
+            .result-item .value.predicted {
+                font-size: 36px;
+            }
             .result-item .value {
                 font-size: 26px;
             }
@@ -766,6 +829,13 @@
             </div>
         </div>
 
+        <!-- LOADING SPINNER -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <div class="loading-text">🔮 Analyzing market patterns...</div>
+            <div class="loading-timer" id="loadingTimer">--</div>
+        </div>
+
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
@@ -794,7 +864,7 @@
             </div>
             <div class="result-item">
                 <div class="label">Status</div>
-                <div class="value" id="statusDisplay" style="font-size:20px; color:#f59e0b;">Waiting</div>
+                <div class="value status-text" id="statusDisplay">Waiting</div>
             </div>
         </div>
 
@@ -849,6 +919,8 @@
             countdownContainer: document.getElementById('countdownContainer'),
             countdownFill: document.getElementById('countdownFill'),
             timeLeft: document.getElementById('timeLeft'),
+            loadingSpinner: document.getElementById('loadingSpinner'),
+            loadingTimer: document.getElementById('loadingTimer'),
         };
 
         // ================================================================
@@ -1076,7 +1148,6 @@
                 this.currentPrediction = null;
                 this.isPredictionActive = false;
                 this.predictionExpired = false;
-                this.predictionStartTime = null;
             }
 
             addTick(digit) {
@@ -1121,7 +1192,6 @@
                 this.currentPrediction = digit;
                 this.isPredictionActive = true;
                 this.predictionExpired = false;
-                this.predictionStartTime = Date.now();
             }
 
             expirePrediction() {
@@ -1134,7 +1204,6 @@
                 this.currentPrediction = null;
                 this.isPredictionActive = false;
                 this.predictionExpired = false;
-                this.predictionStartTime = null;
             }
 
             getAccuracy() {
@@ -1352,6 +1421,8 @@
 
                 this.socket = null;
                 this.initialized = false;
+                this.isLoading = false;
+                this.loadingInterval = null;
 
                 this._bindUI();
                 this._init();
@@ -1411,7 +1482,7 @@
                         DOM.statusDisplay.textContent = '✅ Correct!';
                         DOM.statusDisplay.style.color = '#22d3ee';
                         DOM.resultStatus.textContent = `✅ CORRECT! Digit ${predicted} was right!`;
-                        DOM.resultStatus.className = 'result-status';
+                        DOM.resultStatus.className = 'result-status correct';
                         this.countdown.stop();
                         DOM.predictBtn.disabled = false;
                         this.predictionEngine.resetPrediction();
@@ -1420,7 +1491,7 @@
                         DOM.statusDisplay.textContent = '❌ Missed';
                         DOM.statusDisplay.style.color = '#e94560';
                         DOM.resultStatus.textContent = `❌ Missed! Was ${actual}, not ${predicted}`;
-                        DOM.resultStatus.className = 'result-status';
+                        DOM.resultStatus.className = 'result-status wrong';
                         this.countdown.stop();
                         DOM.predictBtn.disabled = false;
                         this.predictionEngine.resetPrediction();
@@ -1440,30 +1511,79 @@
                 DOM.statusText.textContent = text;
             }
 
+            _startLoading() {
+                this.isLoading = true;
+                DOM.loadingSpinner.classList.add('active');
+                DOM.predictBtn.disabled = true;
+                DOM.resultStatus.textContent = '⏳ Analyzing...';
+                DOM.resultStatus.className = 'result-status loading';
+                DOM.statusDisplay.textContent = '⏳ Loading';
+                DOM.statusDisplay.style.color = '#f59e0b';
+
+                // Random time between 5-15 seconds
+                const waitTime = 5000 + Math.random() * 10000;
+                const startTime = Date.now();
+
+                // Update timer
+                this.loadingInterval = setInterval(() => {
+                    const elapsed = Date.now() - startTime;
+                    const remaining = Math.max(0, (waitTime - elapsed) / 1000);
+                    DOM.loadingTimer.textContent = `${Math.ceil(remaining)}s`;
+                }, 100);
+
+                this.logger.log(`⏳ Analyzing market patterns... (${Math.round(waitTime/1000)}s)`, 'info');
+
+                setTimeout(() => {
+                    this._showPrediction();
+                }, waitTime);
+            }
+
+            _showPrediction() {
+                this.isLoading = false;
+                clearInterval(this.loadingInterval);
+                DOM.loadingSpinner.classList.remove('active');
+                DOM.predictBtn.disabled = false;
+
+                const pred = this.predictionEngine.generatePrediction();
+                const conf = this.predictionEngine.getConfidence(pred);
+
+                DOM.predictedDisplay.textContent = pred;
+                DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
+                DOM.statusDisplay.textContent = '⏳ Active';
+                DOM.statusDisplay.style.color = '#22d3ee';
+                DOM.resultStatus.textContent = `🎯 ${pred} predicted! Valid for ${PREDICTION_WINDOW}s`;
+                DOM.resultStatus.className = 'result-status active';
+
+                this.predictionEngine.startPrediction(pred);
+                this.countdown.start();
+
+                this.logger.log(`🎯 PREDICTED: ${pred} (${Math.round(conf)}% confidence)`, 'info');
+                this.logger.log(`⏳ You have ${PREDICTION_WINDOW}s to trade this digit`, 'info');
+            }
+
             _bindUI() {
                 DOM.predictBtn.addEventListener('click', () => {
+                    if (this.isLoading) {
+                        DOM.resultStatus.textContent = '⏳ Already analyzing...';
+                        DOM.resultStatus.className = 'result-status loading';
+                        return;
+                    }
+
                     if (this.predictionEngine.isActive() && !this.predictionEngine.isExpired()) {
                         DOM.resultStatus.textContent = '⏳ Prediction already active!';
                         DOM.resultStatus.className = 'result-status waiting';
                         return;
                     }
 
-                    const pred = this.predictionEngine.generatePrediction();
-                    const conf = this.predictionEngine.getConfidence(pred);
+                    // Reset previous prediction display
+                    DOM.predictedDisplay.textContent = '-';
+                    DOM.confidenceDisplay.textContent = '-';
+                    DOM.statusDisplay.textContent = '⏳ Loading';
+                    DOM.statusDisplay.style.color = '#f59e0b';
+                    DOM.resultStatus.textContent = '⏳ Analyzing market patterns...';
+                    DOM.resultStatus.className = 'result-status loading';
 
-                    DOM.predictedDisplay.textContent = pred;
-                    DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
-                    DOM.statusDisplay.textContent = '⏳ Active';
-                    DOM.statusDisplay.style.color = '#22d3ee';
-                    DOM.resultStatus.textContent = `⏳ ${pred} predicted - valid for ${PREDICTION_WINDOW}s`;
-                    DOM.resultStatus.className = 'result-status active';
-
-                    this.predictionEngine.startPrediction(pred);
-                    this.countdown.start();
-                    DOM.predictBtn.disabled = true;
-
-                    this.logger.log(`🎯 PREDICTED: ${pred} (${Math.round(conf)}% confidence)`, 'info');
-                    this.logger.log(`⏳ You have ${PREDICTION_WINDOW}s to trade this digit`, 'info');
+                    this._startLoading();
                 });
 
                 DOM.symbolSelect.addEventListener('change', () => {
@@ -1471,10 +1591,16 @@
                         clearInterval(this.countdown.timer);
                         this.countdown.timer = null;
                     }
+                    if (this.loadingInterval) {
+                        clearInterval(this.loadingInterval);
+                        this.loadingInterval = null;
+                    }
                     this.countdown.stop();
                     this.predictionEngine.resetPrediction();
                     this.predictionEngine.expired = false;
                     DOM.predictBtn.disabled = false;
+                    this.isLoading = false;
+                    DOM.loadingSpinner.classList.remove('active');
 
                     const symbol = DOM.symbolSelect.value;
                     DOM.predictedDisplay.textContent = '-';

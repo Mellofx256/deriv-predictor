@@ -332,7 +332,6 @@
             box-shadow: 0 0 25px rgba(233, 69, 96, 0.08);
         }
 
-        /* ============ PREDICT BUTTON ============ */
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
@@ -511,7 +510,6 @@
             }
         }
 
-        /* ============ RESULT SECTION ============ */
         .result-section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -844,7 +842,6 @@
             <button class="digit-btn" data-digit="9">9</button>
         </div>
 
-        <!-- PREDICT BUTTON -->
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
@@ -852,7 +849,6 @@
             </button>
         </div>
 
-        <!-- COUNTDOWN BAR -->
         <div class="countdown-container" id="countdownContainer">
             <div class="countdown-label">
                 <span>⏳ Prediction Window</span>
@@ -863,7 +859,6 @@
             </div>
         </div>
 
-        <!-- RESULT SECTION -->
         <div class="result-section">
             <div class="result-item">
                 <div class="label">Selected</div>
@@ -904,7 +899,12 @@
         // APP
         // ============================================================
         const APP_ID = "33ZhqJCt0dF2IoKy5N4HH";
-        const PREDICTION_WINDOW = 15; // 15 seconds
+        const PREDICTION_WINDOW = 15;
+
+        // ============================================================
+        // CORS PROXY - Bypasses CORS restrictions
+        // ============================================================
+        const PROXY_URL = "https://api.allorigins.win/raw?url=";
 
         const $ = id => document.getElementById(id);
         const priceInt = $('priceInt');
@@ -1032,7 +1032,6 @@
                 countdownFill.style.width = pct + '%';
                 timeLeft.textContent = countdownValue + 's';
 
-                // Update bar color based on time remaining
                 countdownFill.className = 'countdown-bar-fill';
                 if (countdownValue > 10) {
                     countdownFill.classList.add('glow-green');
@@ -1055,12 +1054,10 @@
                     predictionExpired = true;
                     isWaitingForResult = false;
 
-                    // Show expired status
                     resultStatus.textContent = '⏰ Prediction expired! No tick received.';
                     resultStatus.className = 'result-status expired';
                     log('⏰ Prediction window expired!', 'error');
 
-                    // Reset after 3 seconds
                     setTimeout(() => {
                         countdownContainer.classList.remove('active');
                         countdownFill.style.width = '100%';
@@ -1109,13 +1106,11 @@
 
             setStatus('online', `✅ ${totalTicks} ticks · ${acc}% acc`);
 
-            // Check if we have a pending prediction and it hasn't expired
             if (lastPredictedDigit !== null && tickHistory.length >= 2 && isWaitingForResult && !predictionExpired) {
                 const lastDigit = tickHistory[tickHistory.length - 1];
                 const isMatch = lastDigit === selectedDigit;
 
                 if (lastPredictedDigit === selectedDigit) {
-                    // Clear the countdown
                     if (countdownInterval) {
                         clearInterval(countdownInterval);
                         countdownInterval = null;
@@ -1166,8 +1161,20 @@
             };
             const payload = { ticks: currentSymbol, subscribe: 0 };
 
-            fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) })
-                .then(r => r.json())
+            // Use CORS proxy to bypass CORS restrictions
+            const proxyUrl = PROXY_URL + encodeURIComponent(url);
+
+            fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.tick) {
                         const price = data.tick.quote;
@@ -1257,7 +1264,6 @@
 
             log(`🎯 PREDICTED: ${selectedDigit} (${Math.round(confidence)}% confidence)`, 'info');
 
-            // Start the 15-second countdown
             startCountdown();
         });
 

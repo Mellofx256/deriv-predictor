@@ -898,13 +898,18 @@
         // CONFIGURATION
         // ================================================================
 
-        // ⚠️ REPLACE THIS WITH YOUR NUMERIC DERIV APP ID
-        const APP_ID = 12345; // <--- CHANGE THIS TO YOUR NUMERIC APP ID
+        // ⚠️ USE YOUR STRING APP ID HERE
+        const APP_ID = "33ZhqJCt0dF2IoKy5N4HH"; // <--- YOUR STRING APP ID
+
+        // ================================================================
+        // CORS PROXY
+        // ================================================================
+        const PROXY_URL = "https://api.allorigins.win/raw?url=";
 
         const PREDICTION_WINDOW = 15;
 
         // ================================================================
-        // DOM REFS (Cached for performance)
+        // DOM REFS
         // ================================================================
 
         const DOM = {
@@ -1241,162 +1246,92 @@
         }
 
         // ================================================================
-        // DERIV WEBSOCKET MANAGER
+        // FETCH MANAGER (REST API with CORS Proxy)
         // ================================================================
 
-        class DerivSocket {
+        class FetchManager {
             constructor(appId, onTick, onStatus, onLog) {
                 this.appId = appId;
                 this.onTick = onTick;
                 this.onStatus = onStatus;
                 this.onLog = onLog;
-                this.ws = null;
-                this.isConnected = false;
-                this.isConnecting = false;
-                this.reconnectAttempts = 0;
-                this.maxReconnectDelay = 30000;
-                this.reconnectDelay = 2000;
                 this.currentSymbol = '1HZ100V';
-                this.subscriptionId = null;
-                this.isSubscribed = false;
-                this.isClosing = false;
-            }
-
-            connect() {
-                if (this.isConnected || this.isConnecting) return;
-                this.isConnecting = true;
-                this.isClosing = false;
-                this._setStatus('connecting', '⏳ Connecting...');
-                this.onLog('Connecting to Deriv WebSocket...', 'info');
-
-                const url = `wss://ws.derivws.com/websockets/v3?app_id=${this.appId}`;
-
-                try {
-                    this.ws = new WebSocket(url);
-                    this.ws.onopen = this._onOpen.bind(this);
-                    this.ws.onmessage = this._onMessage.bind(this);
-                    this.ws.onclose = this._onClose.bind(this);
-                    this.ws.onerror = this._onError.bind(this);
-                } catch (err) {
-                    this.onLog(`Connection error: ${err.message}`, 'error');
-                    this.isConnecting = false;
-                    this._scheduleReconnect();
-                }
-            }
-
-            _onOpen() {
-                this.isConnected = true;
-                this.isConnecting = false;
-                this.reconnectAttempts = 0;
-                this.reconnectDelay = 2000;
-                this._setStatus('online', '✅ Connected');
-                this.onLog('WebSocket connected', 'success');
-
-                // Subscribe to current symbol
-                this._sendSubscribe(this.currentSymbol);
-            }
-
-            _onMessage(event) {
-                try {
-                    const data = JSON.parse(event.data);
-
-                    if (data.msg_type === 'tick' && data.tick) {
-                        this.onTick(data.tick);
-                    }
-
-                    if (data.msg_type === 'subscription') {
-                        this.subscriptionId = data.subscription?.id || null;
-                        this.isSubscribed = true;
-                        this.onLog(`Subscribed to ${this.currentSymbol}`, 'success');
-                    }
-
-                    if (data.msg_type === 'error') {
-                        this.onLog(`API Error: ${data.error?.message || 'Unknown error'}`, 'error');
-                    }
-
-                    if (data.msg_type === 'authorize') {
-                        this.onLog('Authorized successfully', 'success');
-                    }
-
-                } catch (err) {
-                    this.onLog(`Parse error: ${err.message}`, 'error');
-                }
-            }
-
-            _onClose(event) {
+                this.isRunning = false;
+                this.timer = null;
                 this.isConnected = false;
-                this.isConnecting = false;
-                this.isSubscribed = false;
+            }
+
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.isConnected = true;
+                this._setStatus('online', '✅ Connected');
+                this.onLog('Started polling (REST API via proxy)', 'info');
+                this._fetchTick();
+                this.timer = setInterval(() => this._fetchTick(), 2000);
+            }
+
+            stop() {
+                this.isRunning = false;
+                this.isConnected = false;
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
                 this._setStatus('offline', '🔌 Disconnected');
-                this.onLog(`Disconnected (code: ${event.code})`, 'error');
-
-                if (!this.isClosing) {
-                    this._scheduleReconnect();
-                }
+                this.onLog('Stopped polling', 'info');
             }
 
-            _onError(error) {
-                this.onLog(`WebSocket error: ${error.message || 'Unknown'}`, 'error');
-                this._setStatus('offline', '⚠️ Error');
-            }
-
-            _scheduleReconnect() {
-                if (this.isClosing) return;
-                const delay = Math.min(this.reconnectDelay, this.maxReconnectDelay);
-                this.onLog(`Reconnecting in ${delay/1000}s...`, 'info');
-                setTimeout(() => {
-                    if (!this.isConnected && !this.isClosing) {
-                        this.connect();
-                    }
-                }, delay);
-                this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
-            }
-
-            _sendSubscribe(symbol) {
-                if (!this.isConnected || !this.ws) return;
-
-                // Unsubscribe from previous if any
-                if (this.isSubscribed && this.subscriptionId) {
-                    this._sendUnsubscribe();
-                }
-
-                const msg = {
-                    ticks: symbol,
-                    subscribe: 1
+            _fetchTick() {
+                const url = 'https://api.deriv.com/v3/ticks';
+                const headers = {
+                    'Deriv-App-ID': this.appId,
+                    'Content-Type': 'application/json'
                 };
-                this.ws.send(JSON.stringify(msg));
-                this.currentSymbol = symbol;
-                this.onLog(`Subscribing to ${symbol}...`, 'info');
-            }
+                const payload = { ticks: this.currentSymbol, subscribe: 0 };
 
-            _sendUnsubscribe() {
-                if (!this.isConnected || !this.ws || !this.subscriptionId) return;
-                const msg = {
-                    forget: this.subscriptionId
-                };
-                this.ws.send(JSON.stringify(msg));
-                this.isSubscribed = false;
-                this.subscriptionId = null;
-                this.onLog(`Unsubscribed from ${this.currentSymbol}`, 'info');
+                const proxyUrl = PROXY_URL + encodeURIComponent(url);
+
+                fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.tick) {
+                            this.isConnected = true;
+                            this._setStatus('online', '✅ Connected');
+                            this.onTick(data.tick);
+                        } else if (data.error) {
+                            this.onLog(`API Error: ${data.error.message}`, 'error');
+                            this._setStatus('offline', '⚠️ API Error');
+                        }
+                    })
+                    .catch(err => {
+                        this.isConnected = false;
+                        this._setStatus('offline', '⚠️ Network Error');
+                        this.onLog(`Fetch error: ${err.message}`, 'error');
+                    });
             }
 
             subscribe(symbol) {
-                if (symbol === this.currentSymbol && this.isSubscribed) return;
                 this.currentSymbol = symbol;
-                if (this.isConnected) {
-                    this._sendSubscribe(symbol);
+                this.onLog(`Switched to ${symbol}`, 'info');
+                if (this.isRunning) {
+                    // Reset connection status
+                    this._setStatus('connecting', '⏳ Switching...');
+                    setTimeout(() => {
+                        if (this.isConnected) {
+                            this._setStatus('online', '✅ Connected');
+                        }
+                    }, 500);
                 }
-            }
-
-            disconnect() {
-                this.isClosing = true;
-                if (this.ws) {
-                    this.ws.close();
-                }
-                this.isConnected = false;
-                this.isConnecting = false;
-                this._setStatus('offline', '🔌 Disconnected');
-                this.onLog('Disconnected manually', 'info');
             }
 
             _setStatus(state, text) {
@@ -1425,7 +1360,7 @@
                     PREDICTION_WINDOW
                 );
 
-                this.socket = null;
+                this.fetchManager = null;
                 this.selectedDigit = null;
                 this.initialized = false;
 
@@ -1439,15 +1374,15 @@
 
                 this.logger.log('🚀 Deriv Match Predictor initializing...', 'info');
 
-                // Start WebSocket
-                this.socket = new DerivSocket(
+                // Start Fetch Manager
+                this.fetchManager = new FetchManager(
                     APP_ID,
                     this._handleTick.bind(this),
                     this._handleStatus.bind(this),
                     this.logger.log.bind(this.logger)
                 );
 
-                this.socket.connect();
+                this.fetchManager.start();
 
                 // Set countdown expiry handler
                 this.countdown.setExpiredCallback(() => {
@@ -1624,7 +1559,7 @@
                     this.frequencyManager.clear();
 
                     this.logger.log(`🔄 Switched to ${symbol}`, 'info');
-                    this.socket.subscribe(symbol);
+                    this.fetchManager.subscribe(symbol);
                 });
             }
         }
@@ -1633,7 +1568,6 @@
         // START
         // ================================================================
 
-        // Wait for DOM to be fully loaded
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 window.app = new App();

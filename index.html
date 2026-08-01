@@ -492,11 +492,6 @@
             text-shadow: 0 0 30px rgba(233, 69, 96, 0.15);
         }
 
-        .result-item .value.actual {
-            color: #22d3ee;
-            text-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
-        }
-
         .result-item .value.confidence {
             font-size: 24px;
             color: #10b981;
@@ -513,18 +508,6 @@
             border: 1px solid transparent;
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
-        }
-
-        .result-status.correct {
-            color: #22d3ee;
-            background: rgba(34, 211, 238, 0.08);
-            border-color: rgba(34, 211, 238, 0.15);
-        }
-
-        .result-status.wrong {
-            color: #e94560;
-            background: rgba(233, 69, 96, 0.08);
-            border-color: rgba(233, 69, 96, 0.15);
         }
 
         .result-status.waiting {
@@ -544,6 +527,12 @@
             color: #f59e0b;
             background: rgba(245, 158, 11, 0.08);
             border-color: rgba(245, 158, 11, 0.15);
+        }
+
+        .result-status.active {
+            color: #22d3ee;
+            background: rgba(34, 211, 238, 0.08);
+            border-color: rgba(34, 211, 238, 0.15);
         }
 
         .history-section {
@@ -780,13 +769,13 @@
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
-                <span class="sub">Click to predict the next digit</span>
+                <span class="sub">Click to get a digit prediction</span>
             </button>
         </div>
 
         <div class="countdown-container" id="countdownContainer">
             <div class="countdown-label">
-                <span>⏳ Prediction Window</span>
+                <span>⏳ Prediction Valid For</span>
                 <span class="time-left" id="timeLeft">15s</span>
             </div>
             <div class="countdown-bar-track">
@@ -796,20 +785,20 @@
 
         <div class="result-section">
             <div class="result-item">
-                <div class="label">Predicted</div>
+                <div class="label">Predicted Digit</div>
                 <div class="value predicted" id="predictedDisplay">-</div>
-            </div>
-            <div class="result-item">
-                <div class="label">Actual</div>
-                <div class="value actual" id="actualDisplay">-</div>
             </div>
             <div class="result-item">
                 <div class="label">Confidence</div>
                 <div class="value confidence" id="confidenceDisplay">-</div>
             </div>
+            <div class="result-item">
+                <div class="label">Status</div>
+                <div class="value" id="statusDisplay" style="font-size:20px; color:#f59e0b;">Waiting</div>
+            </div>
         </div>
 
-        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to start</div>
+        <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to get a digit prediction</div>
 
         <div class="history-section">
             <div class="history-label">📜 Recent Digits</div>
@@ -854,8 +843,8 @@
             symbolSelect: document.getElementById('symbol'),
             predictBtn: document.getElementById('predictBtn'),
             predictedDisplay: document.getElementById('predictedDisplay'),
-            actualDisplay: document.getElementById('actualDisplay'),
             confidenceDisplay: document.getElementById('confidenceDisplay'),
+            statusDisplay: document.getElementById('statusDisplay'),
             resultStatus: document.getElementById('resultStatus'),
             countdownContainer: document.getElementById('countdownContainer'),
             countdownFill: document.getElementById('countdownFill'),
@@ -895,6 +884,7 @@
                 this.container = container;
                 this.maxDigits = maxDigits;
                 this.digits = [];
+                this.lastDigit = null;
             }
 
             add(digit) {
@@ -902,6 +892,7 @@
                 if (this.digits.length > this.maxDigits) {
                     this.digits.shift();
                 }
+                this.lastDigit = digit;
                 this.render();
             }
 
@@ -913,18 +904,15 @@
                 }
                 const html = this.digits.map((d, i) => {
                     const isRecent = i >= this.digits.length - 5;
-                    const isHighlight = d === this._lastDigit;
+                    const isHighlight = d === this.lastDigit;
                     return `<span class="history-digit ${isRecent ? 'recent' : ''} ${isHighlight ? 'highlight' : ''}">${d}</span>`;
                 }).join('');
                 this.container.innerHTML = html;
             }
 
-            setLastDigit(digit) {
-                this._lastDigit = digit;
-            }
-
             clear() {
                 this.digits = [];
+                this.lastDigit = null;
                 this.render();
             }
 
@@ -1085,12 +1073,10 @@
                 this.history = [];
                 this.totalTicks = 0;
                 this.correctPredictions = 0;
-                this.lastPrediction = null;
-                this.lastDigit = null;
-                this.pendingPrediction = null;
-                this.isWaiting = false;
-                this.expired = false;
-                this.predictedDigit = null;
+                this.currentPrediction = null;
+                this.isPredictionActive = false;
+                this.predictionExpired = false;
+                this.predictionStartTime = null;
             }
 
             addTick(digit) {
@@ -1098,22 +1084,10 @@
                 if (this.history.length > 50) this.history.shift();
                 this.totalTicks++;
                 this.lastDigit = digit;
-
-                if (this.pendingPrediction !== null && this.isWaiting && !this.expired) {
-                    const isMatch = digit === this.predictedDigit;
-                    this.pendingPrediction = null;
-                    this.isWaiting = false;
-                    if (isMatch) {
-                        this.correctPredictions++;
-                        return { result: 'correct', digit: digit, predicted: this.predictedDigit };
-                    } else {
-                        return { result: 'wrong', digit: digit, predicted: this.predictedDigit };
-                    }
-                }
                 return null;
             }
 
-            predict() {
+            generatePrediction() {
                 if (this.history.length === 0) {
                     return Math.floor(Math.random() * 10);
                 }
@@ -1143,28 +1117,28 @@
                 return Math.max(10, Math.min(95, confidence));
             }
 
-            getAccuracy() {
-                return this.totalTicks > 0 ? Math.round((this.correctPredictions / this.totalTicks) * 100) : 0;
-            }
-
             startPrediction(digit) {
-                this.predictedDigit = digit;
-                this.pendingPrediction = digit;
-                this.isWaiting = true;
-                this.expired = false;
+                this.currentPrediction = digit;
+                this.isPredictionActive = true;
+                this.predictionExpired = false;
+                this.predictionStartTime = Date.now();
             }
 
             expirePrediction() {
-                this.expired = true;
-                this.isWaiting = false;
-                this.pendingPrediction = null;
+                this.predictionExpired = true;
+                this.isPredictionActive = false;
+                this.currentPrediction = null;
             }
 
             resetPrediction() {
-                this.pendingPrediction = null;
-                this.isWaiting = false;
-                this.expired = false;
-                this.predictedDigit = null;
+                this.currentPrediction = null;
+                this.isPredictionActive = false;
+                this.predictionExpired = false;
+                this.predictionStartTime = null;
+            }
+
+            getAccuracy() {
+                return this.totalTicks > 0 ? Math.round((this.correctPredictions / this.totalTicks) * 100) : 0;
             }
 
             getHistory() {
@@ -1173,6 +1147,18 @@
 
             getTotalTicks() {
                 return this.totalTicks;
+            }
+
+            getCurrentPrediction() {
+                return this.currentPrediction;
+            }
+
+            isActive() {
+                return this.isPredictionActive;
+            }
+
+            isExpired() {
+                return this.predictionExpired;
             }
         }
 
@@ -1388,13 +1374,15 @@
 
                 this.countdown.setExpiredCallback(() => {
                     this.predictionEngine.expirePrediction();
-                    DOM.resultStatus.textContent = '⏰ Prediction expired! No tick received.';
+                    DOM.statusDisplay.textContent = '⏰ Expired';
+                    DOM.statusDisplay.style.color = '#e94560';
+                    DOM.resultStatus.textContent = '⏰ Prediction expired! Click PREDICT for a new one.';
                     DOM.resultStatus.className = 'result-status expired';
-                    this.logger.log('⏰ Prediction window expired!', 'error');
                     DOM.predictBtn.disabled = false;
+                    this.logger.log('⏰ Prediction window expired!', 'error');
                     setTimeout(() => {
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Click PREDICT to start';
+                        DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
                         DOM.resultStatus.className = 'result-status waiting';
                     }, 3000);
                 });
@@ -1411,41 +1399,36 @@
                 DOM.priceDec.textContent = '.' + decPart;
 
                 this.historyManager.add(parseInt(digit));
-                this.historyManager.setLastDigit(parseInt(digit));
                 this.frequencyManager.update(this.historyManager.getHistory());
 
-                const result = this.predictionEngine.addTick(parseInt(digit));
-
-                if (result) {
-                    this.countdown.stop();
-                    DOM.actualDisplay.textContent = result.digit;
-
-                    if (result.result === 'correct') {
-                        DOM.resultStatus.textContent = '✅ CORRECT! Prediction was right!';
-                        DOM.resultStatus.className = 'result-status correct';
-                        this.logger.log(`✅ Correct! Predicted ${result.predicted} → Actual ${result.digit}`, 'success');
-                        DOM.countdownFill.className = 'countdown-bar-fill glow-green';
-                        DOM.timeLeft.textContent = '✅ Hit!';
-                    } else {
-                        DOM.resultStatus.textContent = `❌ WRONG! Predicted ${result.predicted} → Actual ${result.digit}`;
-                        DOM.resultStatus.className = 'result-status wrong';
-                        this.logger.log(`❌ Wrong! Predicted ${result.predicted} → Actual ${result.digit}`, 'error');
-                        DOM.countdownFill.className = 'countdown-bar-fill glow-red';
-                        DOM.timeLeft.textContent = '❌ Miss!';
-                    }
-
-                    this.predictionEngine.resetPrediction();
-                    DOM.predictBtn.disabled = false;
-
-                    setTimeout(() => {
+                // Check if prediction matches actual digit
+                if (this.predictionEngine.isActive() && !this.predictionEngine.isExpired()) {
+                    const predicted = this.predictionEngine.getCurrentPrediction();
+                    const actual = parseInt(digit);
+                    if (predicted === actual) {
+                        this.predictionEngine.correctPredictions++;
+                        this.logger.log(`✅ CORRECT! Predicted ${predicted} → Actual ${actual}`, 'success');
+                        DOM.statusDisplay.textContent = '✅ Correct!';
+                        DOM.statusDisplay.style.color = '#22d3ee';
+                        DOM.resultStatus.textContent = `✅ CORRECT! Digit ${predicted} was right!`;
+                        DOM.resultStatus.className = 'result-status';
                         this.countdown.stop();
-                        DOM.resultStatus.textContent = '⚡ Click PREDICT to start';
-                        DOM.resultStatus.className = 'result-status waiting';
-                    }, 3000);
+                        DOM.predictBtn.disabled = false;
+                        this.predictionEngine.resetPrediction();
+                    } else {
+                        this.logger.log(`❌ Predicted ${predicted} → Actual ${actual}`, 'error');
+                        DOM.statusDisplay.textContent = '❌ Missed';
+                        DOM.statusDisplay.style.color = '#e94560';
+                        DOM.resultStatus.textContent = `❌ Missed! Was ${actual}, not ${predicted}`;
+                        DOM.resultStatus.className = 'result-status';
+                        this.countdown.stop();
+                        DOM.predictBtn.disabled = false;
+                        this.predictionEngine.resetPrediction();
+                    }
+                    DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
                 }
 
                 DOM.tickCount.textContent = this.predictionEngine.getTotalTicks();
-                DOM.accDisplay.textContent = this.predictionEngine.getAccuracy() + '%';
 
                 if (this.predictionEngine.getTotalTicks() % 5 === 0) {
                     this.logger.log(`✅ Tick #${this.predictionEngine.getTotalTicks()}: ${price} → digit ${digit}`, 'success');
@@ -1459,28 +1442,28 @@
 
             _bindUI() {
                 DOM.predictBtn.addEventListener('click', () => {
-                    if (this.predictionEngine.isWaiting && !this.predictionEngine.expired) {
-                        DOM.resultStatus.textContent = '⏳ Please wait...';
+                    if (this.predictionEngine.isActive() && !this.predictionEngine.isExpired()) {
+                        DOM.resultStatus.textContent = '⏳ Prediction already active!';
                         DOM.resultStatus.className = 'result-status waiting';
                         return;
                     }
 
-                    const pred = this.predictionEngine.predict();
+                    const pred = this.predictionEngine.generatePrediction();
+                    const conf = this.predictionEngine.getConfidence(pred);
 
                     DOM.predictedDisplay.textContent = pred;
-                    DOM.actualDisplay.textContent = '...';
-
-                    const conf = this.predictionEngine.getConfidence(pred);
                     DOM.confidenceDisplay.textContent = Math.round(conf) + '%';
-
-                    DOM.resultStatus.textContent = `⏳ Waiting ${PREDICTION_WINDOW}s for result...`;
-                    DOM.resultStatus.className = 'result-status waiting';
-
-                    this.logger.log(`🎯 PREDICTED: ${pred} (${Math.round(conf)}% confidence)`, 'info');
+                    DOM.statusDisplay.textContent = '⏳ Active';
+                    DOM.statusDisplay.style.color = '#22d3ee';
+                    DOM.resultStatus.textContent = `⏳ ${pred} predicted - valid for ${PREDICTION_WINDOW}s`;
+                    DOM.resultStatus.className = 'result-status active';
 
                     this.predictionEngine.startPrediction(pred);
                     this.countdown.start();
                     DOM.predictBtn.disabled = true;
+
+                    this.logger.log(`🎯 PREDICTED: ${pred} (${Math.round(conf)}% confidence)`, 'info');
+                    this.logger.log(`⏳ You have ${PREDICTION_WINDOW}s to trade this digit`, 'info');
                 });
 
                 DOM.symbolSelect.addEventListener('change', () => {
@@ -1495,13 +1478,14 @@
 
                     const symbol = DOM.symbolSelect.value;
                     DOM.predictedDisplay.textContent = '-';
-                    DOM.actualDisplay.textContent = '-';
                     DOM.confidenceDisplay.textContent = '-';
+                    DOM.statusDisplay.textContent = 'Waiting';
+                    DOM.statusDisplay.style.color = '#f59e0b';
                     DOM.priceInt.textContent = '--';
                     DOM.priceDec.textContent = '--';
                     DOM.tickCount.textContent = '0';
                     DOM.accDisplay.textContent = '0%';
-                    DOM.resultStatus.textContent = '⚡ Click PREDICT to start';
+                    DOM.resultStatus.textContent = '⚡ Click PREDICT to get a digit prediction';
                     DOM.resultStatus.className = 'result-status waiting';
 
                     this.predictionEngine.history = [];

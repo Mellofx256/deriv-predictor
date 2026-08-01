@@ -9,52 +9,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
 
     <style>
-        /* ============ THEME COLORS ============ */
+        /* ============ THEME ============ */
         :root {
-            --color-bg-dark: #0a0e1a;
-            --color-purple: #6c3cb0;
-            --color-pink: #e94560;
-            --color-blue: #3b82f6;
-            --color-cyan: #22d3ee;
-            --color-gold: #f59e0b;
-            --color-green: #10b981;
-            --color-white: #ffffff;
-            --color-gray-light: rgba(255, 255, 255, 0.85);
-            --color-gray-mid: rgba(255, 255, 255, 0.6);
-            --color-gray-dark: rgba(255, 255, 255, 0.25);
-
-            --bg-glass: rgba(10, 14, 26, 0.72);
-            --bg-glass-hover: rgba(10, 14, 26, 0.82);
+            --bg-glass: rgba(10, 14, 26, 0.75);
+            --bg-glass-hover: rgba(10, 14, 26, 0.85);
             --border-glass: rgba(255, 255, 255, 0.08);
             --shadow-glass: 0 8px 40px rgba(0, 0, 0, 0.6);
-
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
             --text-muted: rgba(255, 255, 255, 0.35);
-
             --predict-btn-bg: linear-gradient(135deg, #6c3cb0, #e94560);
             --predict-btn-text: #ffffff;
-
             --status-bg: rgba(255, 255, 255, 0.06);
             --freq-bar-bg: rgba(255, 255, 255, 0.06);
             --freq-fill: linear-gradient(180deg, #e94560, #6c3cb0);
             --freq-fill-high: linear-gradient(180deg, #22d3ee, #3b82f6);
-
             --history-digit-bg: rgba(255, 255, 255, 0.06);
             --history-digit-color: rgba(255, 255, 255, 0.5);
             --history-recent-bg: rgba(34, 211, 238, 0.12);
             --history-recent-color: #22d3ee;
             --history-highlight-bg: rgba(233, 69, 96, 0.15);
             --history-highlight-color: #e94560;
-
             --bg-input: rgba(255, 255, 255, 0.06);
             --border-color: rgba(255, 255, 255, 0.08);
             --select-color: #ffffff;
             --select-bg: rgba(255, 255, 255, 0.06);
-
             --log-bg: rgba(0, 0, 0, 0.3);
             --log-text: rgba(255, 255, 255, 0.4);
-
             --result-bg: rgba(255, 255, 255, 0.04);
         }
 
@@ -100,6 +81,7 @@
             box-shadow: 0 12px 56px rgba(0, 0, 0, 0.7);
         }
 
+        /* ============ HEADER ============ */
         .header {
             display: flex;
             justify-content: space-between;
@@ -150,6 +132,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* ============ STATUS BAR ============ */
         .status-bar {
             display: flex;
             justify-content: space-between;
@@ -216,6 +199,7 @@
             font-weight: 600;
         }
 
+        /* ============ SELECTOR ============ */
         .selector-wrapper {
             margin-bottom: 12px;
         }
@@ -271,6 +255,7 @@
             box-shadow: 0 0 20px rgba(108, 60, 176, 0.15);
         }
 
+        /* ============ PRICE ============ */
         .price-section {
             text-align: center;
             padding: 10px 0 8px;
@@ -296,6 +281,7 @@
             color: #22d3ee;
         }
 
+        /* ============ PREDICT BUTTON ============ */
         .predict-center {
             text-align: center;
             margin: 16px 0 18px;
@@ -376,6 +362,7 @@
             }
         }
 
+        /* ============ COUNTDOWN ============ */
         .countdown-container {
             margin: 14px 0 16px;
             padding: 12px 16px;
@@ -473,6 +460,7 @@
             }
         }
 
+        /* ============ RESULTS ============ */
         .result-section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -522,6 +510,7 @@
             text-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
         }
 
+        /* ============ RESULT STATUS ============ */
         .result-status {
             text-align: center;
             font-size: 12px;
@@ -565,6 +554,7 @@
             border-color: rgba(245, 158, 11, 0.15);
         }
 
+        /* ============ HISTORY ============ */
         .history-section {
             background: var(--bg-glass);
             border-radius: 12px;
@@ -616,6 +606,7 @@
             color: var(--history-highlight-color);
         }
 
+        /* ============ FREQUENCY ============ */
         .frequency-section {
             margin: 12px 0 14px;
         }
@@ -671,6 +662,7 @@
             color: var(--text-secondary);
         }
 
+        /* ============ LOG ============ */
         .log-section {
             margin-top: 12px;
             padding: 8px 12px;
@@ -708,6 +700,7 @@
             color: #f59e0b;
         }
 
+        /* ============ RESPONSIVE ============ */
         @media (max-width: 420px) {
             .container {
                 padding: 16px 12px;
@@ -743,6 +736,7 @@
 
     <div class="container">
 
+        <!-- HEADER -->
         <div class="header">
             <div class="logo">
                 <div class="logo-icon">🎯</div>
@@ -751,6 +745,7 @@
             <div class="badge">Live</div>
         </div>
 
+        <!-- STATUS BAR -->
         <div class="status-bar">
             <div class="status-dot">
                 <span class="dot online" id="statusDot"></span>
@@ -762,6 +757,7 @@
             </div>
         </div>
 
+        <!-- SELECTOR -->
         <div class="selector-wrapper">
             <label>📊 Select Index</label>
             <select id="symbol">
@@ -789,6 +785,7 @@
             </select>
         </div>
 
+        <!-- PRICE -->
         <div class="price-section">
             <div class="price-label">Current Price</div>
             <div class="price-value" id="priceDisplay">
@@ -796,7 +793,7 @@
             </div>
         </div>
 
-        <!-- PREDICT BUTTON (Center) -->
+        <!-- PREDICT BUTTON -->
         <div class="predict-center">
             <button class="predict-btn" id="predictBtn">
                 🎯 PREDICT
@@ -831,6 +828,7 @@
             </div>
         </div>
 
+        <!-- RESULT STATUS -->
         <div class="result-status waiting" id="resultStatus">⚡ Click PREDICT to start</div>
 
         <!-- HISTORY -->
@@ -856,7 +854,7 @@
 
     <script>
         // ================================================================
-        // CONFIGURATION - USING PUBLIC APP ID (NO AUTH REQUIRED)
+        // CONFIGURATION
         // ================================================================
 
         const APP_ID = 1089;
@@ -1124,9 +1122,10 @@
                 this.totalTicks++;
                 this.lastDigit = digit;
 
-                // Check if we have a pending prediction
                 if (this.pendingPrediction !== null && this.isWaiting && !this.expired) {
                     const isMatch = digit === this.predictedDigit;
+                    this.pendingPrediction = null;
+                    this.isWaiting = false;
                     if (isMatch) {
                         this.correctPredictions++;
                         return { result: 'correct', digit: digit, predicted: this.predictedDigit };
@@ -1138,19 +1137,7 @@
             }
 
             predict() {
-                if (this.history.length < 10) {
-                    // If not enough data, use frequency analysis on available data
-                    if (this.history.length === 0) return null;
-                    const freq = {};
-                    this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
-                    let maxFreq = 0,
-                        pred = 0;
-                    for (const [digit, count] of Object.entries(freq)) {
-                        if (count > maxFreq) { maxFreq = count;
-                            pred = parseInt(digit); }
-                    }
-                    return pred;
-                }
+                if (this.history.length < 3) return null;
 
                 const freq = {};
                 this.history.forEach(d => freq[d] = (freq[d] || 0) + 1);
@@ -1208,7 +1195,7 @@
         }
 
         // ================================================================
-        // DERIV WEBSOCKET MANAGER
+        // DERIV WEBSOCKET
         // ================================================================
 
         class DerivSocket {
@@ -1234,7 +1221,7 @@
                 this.isConnecting = true;
                 this.isClosing = false;
                 this._setStatus('connecting', '⏳ Connecting...');
-                this.onLog('Connecting to Deriv WebSocket...', 'info');
+                this.onLog('Connecting to Deriv...', 'info');
 
                 const url = `wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`;
 
@@ -1265,7 +1252,7 @@
                 this.reconnectAttempts = 0;
                 this.reconnectDelay = 1000;
                 this._setStatus('online', '✅ Connected');
-                this.onLog('WebSocket connected', 'success');
+                this.onLog('Connected successfully', 'success');
 
                 setTimeout(() => {
                     this._subscribe(this.currentSymbol);
@@ -1379,7 +1366,7 @@
         }
 
         // ================================================================
-        // APP CONTROLLER
+        // APP
         // ================================================================
 
         class App {
@@ -1489,16 +1476,15 @@
             }
 
             _bindUI() {
-                // Predict button
                 DOM.predictBtn.addEventListener('click', () => {
                     if (this.predictionEngine.isWaiting && !this.predictionEngine.expired) {
-                        DOM.resultStatus.textContent = '⏳ Please wait for current prediction to complete...';
+                        DOM.resultStatus.textContent = '⏳ Please wait...';
                         DOM.resultStatus.className = 'result-status waiting';
                         return;
                     }
 
                     if (this.predictionEngine.getHistory().length < 3) {
-                        DOM.resultStatus.textContent = '⏳ Waiting for more data... (need 3 ticks)';
+                        DOM.resultStatus.textContent = '⏳ Need more data... (waiting for ticks)';
                         DOM.resultStatus.className = 'result-status waiting';
                         this.logger.log('⏳ Not enough data yet', 'info');
                         return;
@@ -1528,7 +1514,6 @@
                     DOM.predictBtn.disabled = true;
                 });
 
-                // Symbol selector
                 DOM.symbolSelect.addEventListener('change', () => {
                     if (this.countdown.timer) {
                         clearInterval(this.countdown.timer);

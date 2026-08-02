@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DERIV Matches</title>
+    <title>DERIV Matches (REST)</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" />
 
     <style>
+        /* ============ THEME ============ */
         :root {
             --bg-glass: rgba(10, 14, 26, 0.78);
             --bg-glass-hover: rgba(10, 14, 26, 0.88);
@@ -205,14 +206,16 @@
 
     <div class="container">
 
+        <!-- HEADER -->
         <div class="header">
             <div class="logo">
-                <div class="logo-icon">🎯</div>
+                <div class="logo-icon">📊</div>
                 <div class="logo-text">DERIV <span>Matches</span></div>
             </div>
-            <div class="badge">Live</div>
+            <div class="badge">REST</div>
         </div>
 
+        <!-- STATUS BAR -->
         <div class="status-bar">
             <div class="status-dot">
                 <span class="dot connecting" id="statusDot"></span>
@@ -224,6 +227,7 @@
             </div>
         </div>
 
+        <!-- SELECTOR -->
         <div class="selector-wrapper">
             <label>📊 Select Index</label>
             <select id="symbol">
@@ -251,6 +255,7 @@
             </select>
         </div>
 
+        <!-- PRICE -->
         <div class="price-section">
             <div class="price-label">Current Price</div>
             <div class="price-value" id="priceDisplay">
@@ -258,6 +263,7 @@
             </div>
         </div>
 
+        <!-- CALIBRATION -->
         <div class="calibration-status" id="calibrationStatus">
             <span id="calibrationText">🔄 Calibrating... <span class="highlight" id="calibrationCount">0</span>/10 ticks</span>
             <div class="progress-bar">
@@ -265,6 +271,7 @@
             </div>
         </div>
 
+        <!-- MODULES -->
         <div class="modules-grid">
             <div class="module-card frequency" id="frequencyModule">
                 <div class="icon">📊</div>
@@ -273,7 +280,6 @@
                 <div class="confidence-text" id="freqConfidence">--</div>
                 <div class="sub-info">Hits: <span id="freqHits">0</span>/10</div>
             </div>
-
             <div class="module-card recency" id="recencyModule">
                 <div class="icon">🕒</div>
                 <div class="label">Recency</div>
@@ -283,6 +289,7 @@
             </div>
         </div>
 
+        <!-- TOP CANDIDATE -->
         <div class="top-candidate" id="topCandidate">
             <div class="label">🏆 Top Candidate</div>
             <div class="consensus-digit" id="consensusDigit">--</div>
@@ -305,6 +312,7 @@
             </div>
         </div>
 
+        <!-- SIGNAL ALERT -->
         <div class="signal-alert" id="signalAlert">
             <div class="signal-label">🚀 SIGNAL DETECTED</div>
             <div class="signal-digit" id="signalDigit">--</div>
@@ -312,6 +320,7 @@
             <div class="signal-sub">Both modules agree on this digit</div>
         </div>
 
+        <!-- DIGIT SELECTOR -->
         <div class="digit-selector" id="digitSelector">
             <button class="digit-btn" data-digit="0">0</button>
             <button class="digit-btn" data-digit="1">1</button>
@@ -325,6 +334,7 @@
             <button class="digit-btn" data-digit="9">9</button>
         </div>
 
+        <!-- HISTORY -->
         <div class="history-section">
             <div class="history-label">📜 Recent Digits</div>
             <div class="history-digits" id="historyContainer">
@@ -332,6 +342,7 @@
             </div>
         </div>
 
+        <!-- LOG -->
         <div class="log-section" id="logContainer">
             <div class="log-entry info">🚀 System initializing...</div>
         </div>
@@ -340,11 +351,12 @@
 
     <script>
         // ================================================================
-        // CONFIGURATION - WORKING WEBSOCKET CONNECTION
+        // CONFIGURATION - REST API (No WebSocket)
         // ================================================================
 
         const APP_ID = 1089;
         const CALIBRATION_TICKS = 10;
+        const POLL_INTERVAL = 2000; // 2 seconds
 
         // ================================================================
         // SOUND ALERT
@@ -353,28 +365,17 @@
         function playSignalSound() {
             try {
                 const audioContext = new(window.AudioContext || window.webkitAudioContext)();
-
-                // Create oscillator for a pleasant alert sound
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-
-                // Two-tone alert: 880Hz then 1100Hz
                 oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
                 oscillator.frequency.setValueAtTime(1100, audioContext.currentTime + 0.15);
-
                 oscillator.type = 'sine';
-
-                // Volume envelope
                 gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.4);
-
-                // Play a second beep
                 setTimeout(() => {
                     const osc2 = audioContext.createOscillator();
                     const gain2 = audioContext.createGain();
@@ -387,10 +388,8 @@
                     osc2.start(audioContext.currentTime);
                     osc2.stop(audioContext.currentTime + 0.3);
                 }, 200);
-
-                logger.log('🔊 Signal sound played!', 'signal');
+                console.log('🔊 Signal sound played!');
             } catch (e) {
-                // AudioContext might not be supported
                 console.log('Sound not supported:', e);
             }
         }
@@ -455,6 +454,7 @@
             historyDigits: [],
             signalActive: false,
             tickCount: 0,
+            pollInterval: null,
         };
 
         // ================================================================
@@ -554,507 +554,396 @@
         }
 
         // ================================================================
-        // WORKING WEBSOCKET CONNECTION
+        // REST API FETCH
         // ================================================================
 
-        class DerivSocket {
-            constructor(onTick, onStatus, onLog) {
-                this.onTick = onTick;
-                this.onStatus = onStatus;
-                this.onLog = onLog;
-                this.ws = null;
-                this.isConnected = false;
-                this.isConnecting = false;
-                this.reconnectAttempts = 0;
-                this.maxReconnectDelay = 30000;
-                this.reconnectDelay = 1000;
-                this.currentSymbol = '1HZ100V';
-                this.isSubscribed = false;
-                this.isClosing = false;
-                this.reconnectTimer = null;
-            }
+        function fetchTick() {
+            const symbol = DOM.symbolSelect.value;
+            const url = `https://api.deriv.com/v3/ticks?ticks=${symbol}&app_id=${APP_ID}`;
 
-            connect() {
-                if (this.isConnected || this.isConnecting) return;
-                this.isConnecting = true;
-                this.isClosing = false;
-                this.onStatus('connecting', '⏳ Connecting...');
-                this.onLog('Connecting to Deriv...', 'info');
-
-                const url = `wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`;
-
-                try {
-                    this.ws = new WebSocket(url);
-                    this.ws.onopen = this._onOpen.bind(this);
-                    this.ws.onmessage = this._onMessage.bind(this);
-                    this.ws.onclose = this._onClose.bind(this);
-                    this.ws.onerror = this._onError.bind(this);
-
-                    setTimeout(() => {
-                        if (this.isConnecting && !this.isConnected) {
-                            this.onLog('Connection timeout - retrying...', 'error');
-                            if (this.ws) this.ws.close();
-                        }
-                    }, 10000);
-
-                } catch (err) {
-                    this.onLog(`Connection error: ${err.message}`, 'error');
-                    this.isConnecting = false;
-                    this._scheduleReconnect();
-                }
-            }
-
-            _onOpen() {
-                this.isConnected = true;
-                this.isConnecting = false;
-                this.reconnectAttempts = 0;
-                this.reconnectDelay = 1000;
-                this.onStatus('online', '✅ Connected');
-                this.onLog('Connected successfully', 'success');
-
-                setTimeout(() => {
-                    this._subscribe(this.currentSymbol);
-                }, 300);
-            }
-
-            _onMessage(event) {
-                try {
-                    const data = JSON.parse(event.data);
-
-                    if (data.msg_type === 'tick' && data.tick) {
-                        this.onTick(data.tick);
+            fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
                     }
-
-                    if (data.msg_type === 'subscription') {
-                        this.isSubscribed = true;
-                        this.onLog(`✅ Subscribed to ${this.currentSymbol}`, 'success');
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
                     }
-
-                    if (data.msg_type === 'error') {
-                        const msg = data.error?.message || 'Unknown error';
-                        this.onLog(`❌ API Error: ${msg}`, 'error');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.tick) {
+                        handleTick(data.tick);
+                    } else if (data.error) {
+                        logger.log(`❌ API Error: ${data.error.message}`, 'error');
                     }
+                })
+                .catch(err => {
+                    // Silent fail - will retry next interval
+                    console.log('Fetch failed:', err.message);
+                });
+        }
 
-                    if (data.msg_type === 'ping') {
-                        this.ws.send(JSON.stringify({ pong: data.ping }));
-                    }
+        // ================================================================
+        // HANDLE TICK
+        // ================================================================
 
-                } catch (err) {
-                    this.onLog(`Parse error: ${err.message}`, 'error');
-                }
+        function handleTick(tick) {
+            const price = tick.quote;
+            const digit = getDigit(price);
+
+            // Update price
+            const [intPart, decPart] = price.toFixed(3).split('.');
+            DOM.priceInt.textContent = intPart;
+            DOM.priceDec.textContent = '.' + decPart;
+
+            // Update history
+            state.historyDigits.push(digit);
+            if (state.historyDigits.length > 20) {
+                state.historyDigits.shift();
+            }
+            renderHistory();
+
+            // Store tick for calibration
+            state.ticks.push(digit);
+            state.tickCount++;
+            const count = state.ticks.length;
+
+            // Update calibration progress
+            const pct = Math.min(100, (count / CALIBRATION_TICKS) * 100);
+            DOM.calibrationProgress.style.width = pct + '%';
+            DOM.calibrationCount.textContent = count;
+
+            if (count <= 5 || count % 5 === 0) {
+                logger.log(`📥 Tick #${state.tickCount}: ${price} → digit ${digit} (${count}/${CALIBRATION_TICKS})`, 'info');
             }
 
-            _onClose(event) {
-                this.isConnected = false;
-                this.isConnecting = false;
-                this.isSubscribed = false;
-                this.onStatus('offline', '🔌 Disconnected');
-                this.onLog(`Disconnected (code: ${event.code})`, 'error');
+            // Calibration complete
+            if (count >= CALIBRATION_TICKS && !state.isCalibrated) {
+                state.isCalibrated = true;
+                DOM.calibrationStatus.classList.add('done');
+                DOM.calibrationText.innerHTML = '✅ Calibration complete! <span class="checkmark">✓</span>';
+                DOM.calibrationProgress.style.width = '100%';
 
-                if (!this.isClosing) {
-                    this._scheduleReconnect();
-                }
+                document.querySelectorAll('.digit-btn').forEach(b => b.disabled = false);
+
+                analyzeAndPredict();
+                logger.log('✅ Calibration complete! 10 ticks collected', 'success');
+                DOM.tickCount.textContent = state.tickCount;
             }
 
-            _onError(error) {
-                this.onLog(`WebSocket error: ${error.message || 'Unknown'}`, 'error');
-                this.onStatus('offline', '⚠️ Error');
-            }
+            DOM.tickCount.textContent = state.tickCount;
 
-            _scheduleReconnect() {
-                if (this.isClosing) return;
-                this.reconnectAttempts++;
-                const delay = Math.min(this.reconnectDelay, this.maxReconnectDelay);
-                this.onLog(`Reconnecting in ${delay/1000}s... (attempt ${this.reconnectAttempts})`, 'info');
-
-                if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-                this.reconnectTimer = setTimeout(() => {
-                    if (!this.isConnected && !this.isClosing) {
-                        this.connect();
-                    }
-                }, delay);
-                this.reconnectDelay = Math.min(this.reconnectDelay * 1.5, this.maxReconnectDelay);
-            }
-
-            _subscribe(symbol) {
-                if (!this.isConnected || !this.ws) {
-                    this.onLog(`⚠️ Cannot subscribe: not connected`, 'error');
-                    return;
-                }
-
-                const msg = {
-                    ticks: symbol,
-                    subscribe: 1
-                };
-                this.ws.send(JSON.stringify(msg));
-                this.currentSymbol = symbol;
-                this.onLog(`📤 Subscribing to ${symbol}...`, 'info');
-            }
-
-            subscribe(symbol) {
-                if (symbol === this.currentSymbol && this.isSubscribed) return;
-                this.currentSymbol = symbol;
-                if (this.isConnected) {
-                    this._subscribe(symbol);
-                }
-            }
-
-            disconnect() {
-                this.isClosing = true;
-                if (this.reconnectTimer) {
-                    clearTimeout(this.reconnectTimer);
-                    this.reconnectTimer = null;
-                }
-                if (this.ws) {
-                    this.ws.close();
-                }
-                this.isConnected = false;
-                this.isConnecting = false;
-                this.onStatus('offline', '🔌 Disconnected');
-                this.onLog('Disconnected manually', 'info');
+            if (state.isCalibrated) {
+                analyzeAndPredict();
             }
         }
 
         // ================================================================
-        // APP
+        // ANALYZE & PREDICT
         // ================================================================
 
-        class App {
-            constructor() {
-                this.initialized = false;
-                this.historyDigits = [];
-                this.historyContainer = DOM.historyContainer;
-                this.maxHistory = 20;
-                this.digitButtons = DOM.digitSelector.querySelectorAll('.digit-btn');
-                this.signalActive = false;
-                this.socket = null;
-                this.soundPlayed = false;
+        function analyzeAndPredict() {
+            const ticks = state.ticks;
 
-                this._init();
+            const freqResult = getMostFrequent(ticks);
+            if (freqResult) {
+                state.frequencyPrediction = freqResult.digit;
+                state.freqHits = freqResult.count;
+                state.frequencyConfidence = Math.min(92, 50 + (freqResult.count / freqResult.total) * 40);
+
+                DOM.freqPrediction.textContent = freqResult.digit;
+                DOM.freqHits.textContent = freqResult.count;
+                const conf = Math.round(state.frequencyConfidence);
+                DOM.freqConfidence.textContent = conf + '%';
+                DOM.freqConfidence.className = 'confidence-text ' + (conf > 70 ? 'high' : conf > 50 ? 'medium' : 'low');
+                DOM.frequencyModule.classList.add('visible');
             }
 
-            _init() {
-                if (this.initialized) return;
-                this.initialized = true;
+            const recencyResult = getRecencyPrediction(ticks);
+            if (recencyResult) {
+                state.recencyPrediction = recencyResult.prediction;
+                state.recencyStreak = recencyResult.streak || 0;
+                state.recencyConfidence = recencyResult.confidence;
 
-                logger.log('🚀 DERIV Matches initializing...', 'info');
+                DOM.recencyPrediction.textContent = recencyResult.prediction;
+                DOM.recencyStreak.textContent = recencyResult.streak || 0;
+                const conf = Math.round(recencyResult.confidence);
+                DOM.recencyConfidence.textContent = conf + '%';
+                DOM.recencyConfidence.className = 'confidence-text ' + (conf > 70 ? 'high' : conf > 50 ? 'medium' : 'low');
 
-                this._resetCalibration();
-
-                this.socket = new DerivSocket(
-                    this._handleTick.bind(this),
-                    this._handleStatus.bind(this),
-                    logger.log.bind(logger)
-                );
-
-                this.socket.connect();
-
-                DOM.symbolSelect.addEventListener('change', () => {
-                    const symbol = DOM.symbolSelect.value;
-                    state.currentSymbol = symbol;
-                    state.ticks = [];
-                    state.isCalibrated = false;
-                    state.totalTicks = 0;
-                    state.correctPredictions = 0;
-                    state.signalActive = false;
-                    state.tickCount = 0;
-                    this.historyDigits = [];
-                    this.soundPlayed = false;
-                    this._renderHistory();
-
-                    this.digitButtons.forEach(b => {
-                        b.classList.remove('highlight-signal');
-                        b.disabled = true;
-                    });
-
-                    DOM.accDisplay.textContent = '0%';
-                    DOM.tickCount.textContent = '0';
-                    DOM.signalAlert.classList.remove('active');
-
-                    this._resetCalibration();
-                    logger.log(`🔄 Switched to ${symbol} - recalibrating...`, 'info');
-                    this.socket.subscribe(symbol);
-                });
-
-                logger.log('✅ Ready', 'success');
+                if (recencyResult.pattern) {
+                    DOM.recencyPrediction.textContent = recencyResult.prediction + ' (X2X)';
+                }
+                DOM.recencyModule.classList.add('visible');
             }
 
-            _resetCalibration() {
-                state.ticks = [];
-                state.isCalibrated = false;
-                state.frequencyPrediction = null;
-                state.recencyPrediction = null;
-                state.consensusDigit = null;
-                state.consensusConfidence = 0;
-                state.signalStrength = null;
-                state.entrySignal = null;
-                state.historyDigits = [];
-                state.signalActive = false;
-                state.tickCount = 0;
-                this.soundPlayed = false;
+            updateTopCandidate();
+        }
 
-                DOM.calibrationStatus.classList.remove('done');
-                DOM.calibrationText.innerHTML = '🔄 Calibrating... <span class="highlight" id="calibrationCount">0</span>/10 ticks';
-                DOM.calibrationProgress.style.width = '0%';
+        // ================================================================
+        // UPDATE TOP CANDIDATE
+        // ================================================================
 
-                DOM.freqPrediction.innerHTML = '<span class="placeholder">--</span>';
-                DOM.freqConfidence.textContent = '--';
-                DOM.freqHits.textContent = '0';
-                DOM.recencyPrediction.innerHTML = '<span class="placeholder">--</span>';
-                DOM.recencyConfidence.textContent = '--';
-                DOM.recencyStreak.textContent = '0';
+        function updateTopCandidate() {
+            const freqPred = state.frequencyPrediction;
+            const recPred = state.recencyPrediction;
+            const freqConf = state.frequencyConfidence;
+            const recConf = state.recencyConfidence;
 
-                DOM.consensusDigit.textContent = '--';
-                DOM.signalStrength.textContent = '--';
-                DOM.signalStrength.className = 'value';
-                DOM.entrySignal.textContent = '--';
-                DOM.entrySignal.className = 'value';
-                DOM.consensusConfidenceFill.style.width = '0%';
-                DOM.consensusConfidenceText.textContent = '--';
+            let consensus = null;
+            let confidence = 0;
+            let strength = null;
+            let entry = null;
 
-                DOM.signalAlert.classList.remove('active');
-                DOM.signalDigit.textContent = '--';
+            document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('highlight-signal'));
 
-                DOM.frequencyModule.classList.remove('visible');
-                DOM.recencyModule.classList.remove('visible');
-                DOM.topCandidate.classList.remove('visible');
-
-                this.digitButtons.forEach(b => {
-                    b.classList.remove('highlight-signal');
-                    b.disabled = true;
-                });
-
-                this.historyDigits = [];
-                this._renderHistory();
-
-                logger.log('🔄 Calibration started - collecting 10 ticks', 'info');
-            }
-
-            _handleTick(tick) {
-                const price = tick.quote;
-                const digit = getDigit(price);
-
-                const [intPart, decPart] = price.toFixed(3).split('.');
-                DOM.priceInt.textContent = intPart;
-                DOM.priceDec.textContent = '.' + decPart;
-
-                this.historyDigits.push(digit);
-                if (this.historyDigits.length > this.maxHistory) {
-                    this.historyDigits.shift();
-                }
-                this._renderHistory();
-
-                state.ticks.push(digit);
-                state.tickCount++;
-                const count = state.ticks.length;
-
-                const pct = Math.min(100, (count / CALIBRATION_TICKS) * 100);
-                DOM.calibrationProgress.style.width = pct + '%';
-                DOM.calibrationCount.textContent = count;
-
-                if (count <= 5 || count % 5 === 0) {
-                    logger.log(`📥 Tick #${state.tickCount}: ${price} → digit ${digit} (${count}/${CALIBRATION_TICKS})`, 'info');
-                }
-
-                if (count >= CALIBRATION_TICKS && !state.isCalibrated) {
-                    state.isCalibrated = true;
-                    DOM.calibrationStatus.classList.add('done');
-                    DOM.calibrationText.innerHTML = '✅ Calibration complete! <span class="checkmark">✓</span>';
-                    DOM.calibrationProgress.style.width = '100%';
-
-                    this.digitButtons.forEach(b => b.disabled = false);
-
-                    this._analyzeAndPredict();
-
-                    logger.log('✅ Calibration complete! 10 ticks collected', 'success');
-                    DOM.tickCount.textContent = state.tickCount;
-                }
-
-                DOM.tickCount.textContent = state.tickCount;
-
-                if (state.isCalibrated) {
-                    this._analyzeAndPredict();
-                }
-            }
-
-            _analyzeAndPredict() {
-                const ticks = state.ticks;
-
-                const freqResult = getMostFrequent(ticks);
-                if (freqResult) {
-                    state.frequencyPrediction = freqResult.digit;
-                    state.freqHits = freqResult.count;
-                    state.frequencyConfidence = Math.min(92, 50 + (freqResult.count / freqResult.total) * 40);
-
-                    DOM.freqPrediction.textContent = freqResult.digit;
-                    DOM.freqHits.textContent = freqResult.count;
-                    const conf = Math.round(state.frequencyConfidence);
-                    DOM.freqConfidence.textContent = conf + '%';
-                    DOM.freqConfidence.className = 'confidence-text ' + (conf > 70 ? 'high' : conf > 50 ? 'medium' : 'low');
-                    DOM.frequencyModule.classList.add('visible');
-                }
-
-                const recencyResult = getRecencyPrediction(ticks);
-                if (recencyResult) {
-                    state.recencyPrediction = recencyResult.prediction;
-                    state.recencyStreak = recencyResult.streak || 0;
-                    state.recencyConfidence = recencyResult.confidence;
-
-                    DOM.recencyPrediction.textContent = recencyResult.prediction;
-                    DOM.recencyStreak.textContent = recencyResult.streak || 0;
-                    const conf = Math.round(recencyResult.confidence);
-                    DOM.recencyConfidence.textContent = conf + '%';
-                    DOM.recencyConfidence.className = 'confidence-text ' + (conf > 70 ? 'high' : conf > 50 ? 'medium' : 'low');
-
-                    if (recencyResult.pattern) {
-                        DOM.recencyPrediction.textContent = recencyResult.prediction + ' (X2X)';
-                    }
-                    DOM.recencyModule.classList.add('visible');
-                }
-
-                this._updateTopCandidate();
-            }
-
-            _updateTopCandidate() {
-                const freqPred = state.frequencyPrediction;
-                const recPred = state.recencyPrediction;
-                const freqConf = state.frequencyConfidence;
-                const recConf = state.recencyConfidence;
-
-                let consensus = null;
-                let confidence = 0;
-                let strength = null;
-                let entry = null;
-
-                this.digitButtons.forEach(b => b.classList.remove('highlight-signal'));
-
-                if (freqPred !== null && recPred !== null) {
-                    if (freqPred === recPred) {
-                        consensus = freqPred;
-                        confidence = Math.max(freqConf, recConf);
-                        strength = 'STRONG';
-                        entry = 'YES';
-
-                        if (consensus !== null && confidence > 60) {
-                            this._activateSignal(consensus, confidence);
-                        } else {
-                            this._deactivateSignal();
-                        }
-                    } else {
-                        if (freqConf > recConf && freqConf > 65) {
-                            consensus = freqPred;
-                            confidence = freqConf;
-                            strength = 'WEAK';
-                            entry = 'CAUTION';
-                        } else if (recConf > freqConf && recConf > 65) {
-                            consensus = recPred;
-                            confidence = recConf;
-                            strength = 'WEAK';
-                            entry = 'CAUTION';
-                        } else {
-                            consensus = freqPred;
-                            confidence = Math.min(freqConf, recConf);
-                            strength = 'WEAK';
-                            entry = 'NO';
-                        }
-                        this._deactivateSignal();
-                    }
-                } else if (freqPred !== null) {
+            if (freqPred !== null && recPred !== null) {
+                if (freqPred === recPred) {
                     consensus = freqPred;
-                    confidence = freqConf;
-                    strength = 'WEAK';
-                    entry = 'CAUTION';
-                    this._deactivateSignal();
-                } else if (recPred !== null) {
-                    consensus = recPred;
-                    confidence = recConf;
-                    strength = 'WEAK';
-                    entry = 'CAUTION';
-                    this._deactivateSignal();
-                } else {
-                    this._deactivateSignal();
-                }
+                    confidence = Math.max(freqConf, recConf);
+                    strength = 'STRONG';
+                    entry = 'YES';
 
-                state.consensusDigit = consensus;
-                state.consensusConfidence = confidence;
-                state.signalStrength = strength;
-                state.entrySignal = entry;
-
-                if (consensus !== null) {
-                    DOM.topCandidate.classList.add('visible');
-                    DOM.consensusDigit.textContent = consensus;
-
-                    DOM.signalStrength.textContent = strength;
-                    DOM.signalStrength.className = 'value ' + (strength === 'STRONG' ? 'strong' : strength === 'WEAK' ? 'weak' : 'no');
-
-                    DOM.entrySignal.textContent = entry;
-                    DOM.entrySignal.className = 'value ' + (entry === 'YES' ? 'yes' : entry === 'CAUTION' ? 'caution' : 'no-entry');
-
-                    const confPct = Math.round(confidence);
-                    DOM.consensusConfidenceFill.style.width = confPct + '%';
-                    DOM.consensusConfidenceFill.className = 'confidence-bar-fill done';
-                    DOM.consensusConfidenceText.textContent = confPct + '%';
-                } else {
-                    DOM.topCandidate.classList.remove('visible');
-                }
-            }
-
-            _activateSignal(digit, confidence) {
-                if (state.signalActive && state.consensusDigit === digit) return;
-
-                state.signalActive = true;
-                state.consensusDigit = digit;
-                state.consensusConfidence = confidence;
-
-                DOM.signalAlert.classList.add('active');
-                DOM.signalDigit.textContent = digit;
-
-                this.digitButtons.forEach(btn => {
-                    btn.classList.remove('highlight-signal');
-                    if (parseInt(btn.dataset.digit) === digit) {
-                        btn.classList.add('highlight-signal');
+                    if (consensus !== null && confidence > 60) {
+                        activateSignal(consensus, confidence);
+                    } else {
+                        deactivateSignal();
                     }
-                });
-
-                // PLAY SOUND!
-                playSignalSound();
-
-                logger.log(`🚀 SIGNAL! Digit ${digit} confirmed with ${Math.round(confidence)}% confidence`, 'signal');
-
-                state.correctPredictions++;
-                this._updateAccuracy();
-            }
-
-            _deactivateSignal() {
-                if (!state.signalActive) return;
-                state.signalActive = false;
-                DOM.signalAlert.classList.remove('active');
-                this.digitButtons.forEach(b => b.classList.remove('highlight-signal'));
-            }
-
-            _renderHistory() {
-                if (this.historyDigits.length === 0) {
-                    this.historyContainer.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Waiting for data...</span>';
-                    return;
+                } else {
+                    if (freqConf > recConf && freqConf > 65) {
+                        consensus = freqPred;
+                        confidence = freqConf;
+                        strength = 'WEAK';
+                        entry = 'CAUTION';
+                    } else if (recConf > freqConf && recConf > 65) {
+                        consensus = recPred;
+                        confidence = recConf;
+                        strength = 'WEAK';
+                        entry = 'CAUTION';
+                    } else {
+                        consensus = freqPred;
+                        confidence = Math.min(freqConf, recConf);
+                        strength = 'WEAK';
+                        entry = 'NO';
+                    }
+                    deactivateSignal();
                 }
-                const html = this.historyDigits.map((d, i) => {
-                    const isRecent = i >= this.historyDigits.length - 5;
-                    const isHighlight = i === this.historyDigits.length - 1;
-                    return `<span class="history-digit ${isRecent ? 'recent' : ''} ${isHighlight ? 'highlight' : ''}">${d}</span>`;
-                }).join('');
-                this.historyContainer.innerHTML = html;
+            } else if (freqPred !== null) {
+                consensus = freqPred;
+                confidence = freqConf;
+                strength = 'WEAK';
+                entry = 'CAUTION';
+                deactivateSignal();
+            } else if (recPred !== null) {
+                consensus = recPred;
+                confidence = recConf;
+                strength = 'WEAK';
+                entry = 'CAUTION';
+                deactivateSignal();
+            } else {
+                deactivateSignal();
             }
 
-            _handleStatus(state, text) {
-                DOM.statusDot.className = `dot ${state}`;
-                DOM.statusText.textContent = text;
-            }
+            state.consensusDigit = consensus;
+            state.consensusConfidence = confidence;
+            state.signalStrength = strength;
+            state.entrySignal = entry;
 
-            _updateAccuracy() {
-                const total = state.tickCount || 1;
-                const acc = total > 0 ? Math.round((state.correctPredictions / total) * 100) : 0;
-                DOM.accDisplay.textContent = acc + '%';
+            if (consensus !== null) {
+                DOM.topCandidate.classList.add('visible');
+                DOM.consensusDigit.textContent = consensus;
+
+                DOM.signalStrength.textContent = strength;
+                DOM.signalStrength.className = 'value ' + (strength === 'STRONG' ? 'strong' : strength === 'WEAK' ? 'weak' : 'no');
+
+                DOM.entrySignal.textContent = entry;
+                DOM.entrySignal.className = 'value ' + (entry === 'YES' ? 'yes' : entry === 'CAUTION' ? 'caution' : 'no-entry');
+
+                const confPct = Math.round(confidence);
+                DOM.consensusConfidenceFill.style.width = confPct + '%';
+                DOM.consensusConfidenceFill.className = 'confidence-bar-fill done';
+                DOM.consensusConfidenceText.textContent = confPct + '%';
+            } else {
+                DOM.topCandidate.classList.remove('visible');
             }
+        }
+
+        // ================================================================
+        // SIGNAL FUNCTIONS
+        // ================================================================
+
+        function activateSignal(digit, confidence) {
+            if (state.signalActive && state.consensusDigit === digit) return;
+
+            state.signalActive = true;
+            state.consensusDigit = digit;
+            state.consensusConfidence = confidence;
+
+            DOM.signalAlert.classList.add('active');
+            DOM.signalDigit.textContent = digit;
+
+            document.querySelectorAll('.digit-btn').forEach(btn => {
+                btn.classList.remove('highlight-signal');
+                if (parseInt(btn.dataset.digit) === digit) {
+                    btn.classList.add('highlight-signal');
+                }
+            });
+
+            playSignalSound();
+            logger.log(`🚀 SIGNAL! Digit ${digit} confirmed with ${Math.round(confidence)}% confidence`, 'signal');
+
+            state.correctPredictions++;
+            updateAccuracy();
+        }
+
+        function deactivateSignal() {
+            if (!state.signalActive) return;
+            state.signalActive = false;
+            DOM.signalAlert.classList.remove('active');
+            document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('highlight-signal'));
+        }
+
+        // ================================================================
+        // RENDER HISTORY
+        // ================================================================
+
+        function renderHistory() {
+            if (state.historyDigits.length === 0) {
+                DOM.historyContainer.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Waiting for data...</span>';
+                return;
+            }
+            const html = state.historyDigits.map((d, i) => {
+                const isRecent = i >= state.historyDigits.length - 5;
+                const isHighlight = i === state.historyDigits.length - 1;
+                return `<span class="history-digit ${isRecent ? 'recent' : ''} ${isHighlight ? 'highlight' : ''}">${d}</span>`;
+            }).join('');
+            DOM.historyContainer.innerHTML = html;
+        }
+
+        // ================================================================
+        // UPDATE ACCURACY
+        // ================================================================
+
+        function updateAccuracy() {
+            const total = state.tickCount || 1;
+            const acc = total > 0 ? Math.round((state.correctPredictions / total) * 100) : 0;
+            DOM.accDisplay.textContent = acc + '%';
+        }
+
+        // ================================================================
+        // RESET CALIBRATION
+        // ================================================================
+
+        function resetCalibration() {
+            state.ticks = [];
+            state.isCalibrated = false;
+            state.frequencyPrediction = null;
+            state.recencyPrediction = null;
+            state.consensusDigit = null;
+            state.consensusConfidence = 0;
+            state.signalStrength = null;
+            state.entrySignal = null;
+            state.historyDigits = [];
+            state.signalActive = false;
+            state.tickCount = 0;
+
+            DOM.calibrationStatus.classList.remove('done');
+            DOM.calibrationText.innerHTML = '🔄 Calibrating... <span class="highlight" id="calibrationCount">0</span>/10 ticks';
+            DOM.calibrationProgress.style.width = '0%';
+
+            DOM.freqPrediction.innerHTML = '<span class="placeholder">--</span>';
+            DOM.freqConfidence.textContent = '--';
+            DOM.freqHits.textContent = '0';
+            DOM.recencyPrediction.innerHTML = '<span class="placeholder">--</span>';
+            DOM.recencyConfidence.textContent = '--';
+            DOM.recencyStreak.textContent = '0';
+
+            DOM.consensusDigit.textContent = '--';
+            DOM.signalStrength.textContent = '--';
+            DOM.signalStrength.className = 'value';
+            DOM.entrySignal.textContent = '--';
+            DOM.entrySignal.className = 'value';
+            DOM.consensusConfidenceFill.style.width = '0%';
+            DOM.consensusConfidenceText.textContent = '--';
+
+            DOM.signalAlert.classList.remove('active');
+            DOM.signalDigit.textContent = '--';
+
+            DOM.frequencyModule.classList.remove('visible');
+            DOM.recencyModule.classList.remove('visible');
+            DOM.topCandidate.classList.remove('visible');
+
+            document.querySelectorAll('.digit-btn').forEach(b => {
+                b.classList.remove('highlight-signal');
+                b.disabled = true;
+            });
+
+            state.historyDigits = [];
+            renderHistory();
+
+            logger.log('🔄 Calibration started - collecting 10 ticks', 'info');
+        }
+
+        // ================================================================
+        // START POLLING
+        // ================================================================
+
+        function startPolling() {
+            setStatus('online', '✅ Connected (REST)');
+            logger.log('✅ REST API polling started (every 2s)', 'success');
+            logger.log(`📡 Fetching: ${DOM.symbolSelect.value}`, 'info');
+
+            // Fetch immediately
+            fetchTick();
+
+            // Then every 2 seconds
+            state.pollInterval = setInterval(fetchTick, POLL_INTERVAL);
+        }
+
+        // ================================================================
+        // INIT
+        // ================================================================
+
+        function init() {
+            logger.log('🚀 DERIV Matches (REST API) initializing...', 'info');
+            logger.log(`📱 App ID: ${APP_ID}`, 'info');
+            logger.log(`⏱ Polling every ${POLL_INTERVAL/1000}s`, 'info');
+
+            resetCalibration();
+
+            // Digit selector
+            DOM.digitSelector.querySelectorAll('.digit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!state.isCalibrated) {
+                        logger.log('⏳ Calibrating... please wait', 'info');
+                        return;
+                    }
+                    // Just visual feedback - no action needed
+                    DOM.digitSelector.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    logger.log(`🎯 Selected digit: ${btn.dataset.digit}`, 'info');
+                });
+            });
+
+            // Symbol change
+            DOM.symbolSelect.addEventListener('change', () => {
+                if (state.pollInterval) {
+                    clearInterval(state.pollInterval);
+                }
+                resetCalibration();
+                logger.log(`🔄 Switched to ${DOM.symbolSelect.value}`, 'info');
+                // Start fetching again
+                fetchTick();
+                state.pollInterval = setInterval(fetchTick, POLL_INTERVAL);
+            });
+
+            // Start polling
+            startPolling();
+
+            logger.log('✅ Ready', 'success');
         }
 
         // ================================================================
@@ -1062,11 +951,9 @@
         // ================================================================
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                window.app = new App();
-            });
+            document.addEventListener('DOMContentLoaded', init);
         } else {
-            window.app = new App();
+            init();
         }
     </script>
 
